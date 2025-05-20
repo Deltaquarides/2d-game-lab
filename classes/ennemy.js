@@ -7,7 +7,13 @@
 */
 
 export class Enemy {
-  constructor(ctx, collisionBlocks = [], enemyPositions = { x: 0, y: 0 }) {
+  constructor(
+    ctx,
+    collisionBlocks = [],
+    enemyPositions = { x: 0, y: 0 },
+    player = null
+  ) {
+    this.player = player;
     this.position = {
       x: enemyPositions.x,
       y: enemyPositions.y,
@@ -33,9 +39,11 @@ export class Enemy {
 
     this.speed = 2; // patrol speed
     this.direction = 1; // 1 = right, -1 = left
-
-    this.minX = enemyPositions.x ?? this.position.x - 50;
-    this.maxX = enemyPositions ?? this.position.x + 50;
+    this.patrolrange = 50;
+    this.minX = this.position.x - this.patrolrange;
+    this.maxX = this.position.x + this.patrolrange;
+    this.detectionRange = 70;
+    this.activated = false;
 
     this.isOnGround = false; // ← track grounded state
     this.collisionBlocks = collisionBlocks;
@@ -46,7 +54,15 @@ export class Enemy {
     this.updateHitbox();
     this.applyGravity();
     this.checkOnGround();
-    this.patrol();
+
+    //in terms of performance and clarity, checking !this.activated is better avoiding
+    if (!this.activated && this.isPlayerNearby()) {
+      this.activated = true;
+    }
+
+    if (this.activated) {
+      this.patrol();
+    }
     this.draw();
   }
 
@@ -98,6 +114,11 @@ export class Enemy {
     this.isOnGround = landed;
   }
 
+  isPlayerNearby() {
+    const playerX = this.player.position.x;
+    const distance = Math.abs(this.position.x - playerX); //Math.abs returns the absolute value of a number. here we want the number to stay positif
+    return distance <= this.detectionRange;
+  }
   patrol() {
     if (!this.isOnGround) return;
     //Move left or right

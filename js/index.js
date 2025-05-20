@@ -29,7 +29,7 @@ map.ready.then(() => {
   eventListeners(player, canvas); // pass the object player to eventListeners as an argument so it can acces for ex player.velocity ect...
   camera = new Camera(ctx, player);
   enemies = level1Enemies.map((pos) => {
-    return new Enemy(ctx, map.collisionBlocks, pos);
+    return new Enemy(ctx, map.collisionBlocks, pos, player);
   });
   console.log("Created enemies", enemies);
 });
