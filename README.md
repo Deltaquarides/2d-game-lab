@@ -1,4 +1,4 @@
-# My 2D JavaScript Game
+# My 2D JavaScript Game from sratch!
 
 A retro-style platformer inspired by classic Mario games. Built using JavaScript and HTML5 Canvas.
 
