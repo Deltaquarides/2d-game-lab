@@ -1,0 +1,270 @@
+import { spriteConfigs } from "../utils/spriteConfigs.js";
+
+let gravity = 0.5;
+
+export class Player {
+  constructor(x, y, collisionBlocks = [], mapBoundaries = null) {
+    this.position = {
+      x: x,
+      y: y,
+    };
+
+    this.hitbox = {
+      position: {
+        x: this.position.x,
+        y: this.position.y,
+      },
+      width: 25,
+      height: 27,
+    };
+
+    this.velocity = {
+      //Adding a velocity means giving it speed and direction — it controls how much the position changes per frame.
+      //by giving for ex; x;1. The velocity will move 1 pixel on the x axis every frame about 60 times per second.
+      x: 0,
+      y: 0,
+    };
+    this.height = 60;
+    this.width = 60;
+    this.jumpMax = 2;
+    this.jumpForce = -6;
+    this.jumpCount = 0; // Track number of jumps (0 = on the ground, 1 = first jump, 2 = second jump)
+
+    //default sprite Start with idle animation
+    this.facing = "right";
+    this.state = "idle"; // Track the current state: idle, walking, jumping, etc.
+    this.imgRenderer = spriteConfigs.idle.handler; // Render by default the first sprite as idle state.
+    this.collisionBlocks = collisionBlocks; // from colllisionsBlock class Map
+    this.mapBoundaries = mapBoundaries;
+    //console.log("Map boundaries received by Player:", this.mapBoundaries);
+  }
+
+  //now we need an update method to: change position using "velocity", applying gravity,
+  //check collisions draws the player in the new position
+  update(ctx, canvas) {
+    this.updateHitbox(); //Any time you change position.x or position.y, call updateHitbox()
+
+    this.position.x = this.position.x + this.velocity.x; // if velocity is for ex: +3 player will move to the right if négatif move to left.
+    this.updateHitbox();
+
+    this.checkForHorizontalCollisions();
+
+    this.applyGravity();
+    this.updateHitbox();
+
+    this.checkForVerticalCollisions();
+    this.checkForMapBoundaryCollisions();
+
+    //console.log("Player Y:", this.position.y, "Velocity Y:", this.velocity.y);
+
+    if (this.imgRenderer) {
+      this.imgRenderer.animate(); // animate and draw method from class imgeHandler
+      //this.handleAnimation();
+      ctx.save();
+      this.imgRenderer.draw(
+        ctx,
+        this.position.x,
+        this.position.y,
+        this.width,
+        this.height
+      );
+      //hitbox
+      ctx.strokeStyle = "red";
+      ctx.strokeRect(this.position.x, this.position.y, this.width, this.height);
+      ctx.fillStyle = "rgba(6, 27, 221, 0.5";
+      ctx.fillRect(
+        this.hitbox.position.x,
+        this.hitbox.position.y,
+        this.hitbox.width,
+        this.hitbox.height
+      );
+      //map edge
+      if (this.mapBoundaries) {
+        ctx.beginPath();
+        ctx.lineWidth = 5;
+        ctx.strokeStyle = "rgba(245, 221, 88, 0.5)";
+        ctx.moveTo(this.mapBoundaries.topEdge, this.mapBoundaries.leftEdge);
+        ctx.lineTo(
+          this.mapBoundaries.topEdge,
+          this.mapBoundaries.bottomEdge / 1.5
+        );
+        ctx.stroke();
+        //console.log(this.mapBoundaries.bottomEdge);
+        ctx.beginPath();
+        ctx.lineWidth = 5;
+        ctx.strokeStyle = "rgba(245, 221, 88, 0.5)";
+        ctx.moveTo(this.mapBoundaries.topEdge, this.mapBoundaries.leftEdge);
+        ctx.lineTo(this.mapBoundaries.rightEdge, this.mapBoundaries.topEdge);
+        ctx.stroke();
+
+        ctx.stroke();
+        //console.log(this.mapBoundaries.bottomEdge);
+        ctx.beginPath();
+        ctx.lineWidth = 5;
+        ctx.strokeStyle = "rgba(245, 221, 88, 0.5)";
+        ctx.moveTo(this.mapBoundaries.rightEdge, this.mapBoundaries.leftEdge);
+        ctx.lineTo(
+          this.mapBoundaries.rightEdge,
+          this.mapBoundaries.bottomEdge / 1.5
+        );
+        ctx.stroke();
+      }
+
+      ctx.fillRect(
+        this.hitbox.position.x,
+        this.hitbox.position.y,
+        this.hitbox.width,
+        this.hitbox.height
+      );
+      ctx.restore();
+    } else console.error("imgRenderer is not set!");
+  }
+
+  //method to sync the hitbox to the current player position: box will move while player move
+  //nothing to do with collisions, call it everytime position.x or position.y changes.
+  updateHitbox() {
+    this.hitbox.position.x =
+      this.position.x + this.width / 2 - this.hitbox.width / 2; //middle vertically of render player
+    this.hitbox.position.y = this.position.y + this.height - this.hitbox.height; //bottom horizontally of the render player
+  }
+
+  checkForHorizontalCollisions() {
+    // Check horizontal collisions
+    for (let block of this.collisionBlocks) {
+      if (
+        this.hitbox.position.x < block.position.x + block.width &&
+        this.hitbox.position.x + this.hitbox.width > block.position.x &&
+        this.hitbox.position.y < block.position.y + block.height &&
+        this.hitbox.position.y + this.hitbox.height > block.position.y
+      ) {
+        // Collision from left
+        if (this.velocity.x > 0) {
+          // Moving left — place hitbox just to the right of block
+          this.hitbox.position.x = block.position.x - this.hitbox.width;
+          this.position.x =
+            this.hitbox.position.x - (this.width / 2 - this.hitbox.width / 2);
+          this.velocity.x = 0;
+
+          break;
+        }
+        // Collision from right
+        else if (this.velocity.x < 0) {
+          // Moving right — place hitbox just to the left of block
+          this.hitbox.position.x = block.position.x + block.width;
+
+          this.velocity.x = 0;
+
+          // Update player position based on hitbox
+          this.position.x =
+            this.hitbox.position.x - (this.width / 2 - this.hitbox.width / 2);
+
+          break;
+        }
+      }
+    }
+    this.updateHitbox();
+  }
+
+  applyGravity() {
+    this.velocity.y = this.velocity.y + gravity; // continue to fall
+    // applying gravity if velocity is positif player move down, pulls down, if negatif player moves up, ex: a jump.
+    this.position.y = this.position.y + this.velocity.y;
+  }
+
+  checkForVerticalCollisions() {
+    // Check vertical collisions
+    for (let block of this.collisionBlocks) {
+      if (
+        this.hitbox.position.x < block.position.x + block.width &&
+        this.hitbox.position.x + this.hitbox.width > block.position.x &&
+        this.hitbox.position.y < block.position.y + block.height &&
+        this.hitbox.position.y + this.hitbox.height > block.position.y
+      ) {
+        const offsetY = this.hitbox.position.y - this.position.y;
+
+        // Collision from top (falling down)
+        if (this.velocity.y > 0) {
+          this.jumpCount = 0; // Only reset jump on landing
+          this.velocity.y = 0;
+          this.position.y = block.position.y - offsetY - this.hitbox.height;
+        }
+        // Collision from bottom (jumping up)
+        else if (this.velocity.y < 0) {
+          this.velocity.y = 0;
+          this.position.y = block.position.y + block.height - offsetY;
+        }
+        break;
+      }
+    }
+    // call resolving a collision that moves the player, hitbox stays align with the player
+    //  after the player has moved (either from normal movement or from being pushed back due to a collision).
+    //A collision might force the player’s position.x or position.y to be changed.
+    //Since the hitbox position depends on the player’s position, we must recalculate it.
+    // That’s exactly what updateHitbox() does — it keeps the hitbox in the right place after any change.
+    this.updateHitbox();
+  }
+
+  checkForMapBoundaryCollisions() {
+    if (!this.mapBoundaries) return;
+    // Left boundary
+    if (this.hitbox.position.x < this.mapBoundaries.leftEdge) {
+      this.hitbox.position.x = this.mapBoundaries.leftEdge;
+      this.velocity.x = 0;
+      this.position.x =
+        this.hitbox.position.x - (this.width / 2 - this.hitbox.width / 2);
+    }
+
+    // Right boundary
+    if (
+      this.hitbox.position.x + this.hitbox.width >
+      this.mapBoundaries.rightEdge
+    ) {
+      this.hitbox.position.x = this.mapBoundaries.rightEdge - this.hitbox.width;
+      this.velocity.x = 0;
+      this.position.x =
+        this.hitbox.position.x - (this.width / 2 - this.hitbox.width / 2);
+    }
+
+    // Top boundary
+    if (this.hitbox.position.y < this.mapBoundaries.topEdge) {
+      this.hitbox.position.y = this.mapBoundaries.topEdge;
+      this.velocity.y = 0;
+      this.position.y =
+        this.hitbox.position.y - this.height + this.hitbox.height;
+    }
+  }
+
+  // Jump method: Increase jumpCount if jumps are available
+  doubleJump() {
+    if (this.jumpCount < this.jumpMax) {
+      // Allow up to two jumps (double jump)
+      this.velocity.y = this.jumpForce; // Set the upward jump velocity
+      this.jumpCount++; // Increment the jump count
+      this.state = "jumping";
+      // console.log(`Jump ${this.jumpCount}`);
+    }
+  }
+
+  jump() {
+    this.doubleJump();
+    // console.log("DOUBLEjump:", this.jumpCount);
+  }
+
+  walk(direction) {
+    if (direction === "left") {
+      this.velocity.x = -3;
+      this.state = "walking";
+      this.facing = "left";
+    } else if (direction === "right") {
+      this.facing = "right";
+
+      this.velocity.x = 3;
+      this.state = "walking";
+    }
+  }
+
+  stopWalking() {
+    this.velocity.x = 0;
+    this.state = "idle"; // Switch to idle state when not walking
+  }
+}
