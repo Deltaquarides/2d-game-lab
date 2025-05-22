@@ -46,4 +46,11 @@ export const spriteConfigs = {
     frameY: 0,
     handler: null,
   },
+  enemyExplode: {
+    src: "../images/enemy-death.png",
+    cols: 6,
+    rows: 1,
+    frameY: 0,
+    handler: null,
+  },
 };

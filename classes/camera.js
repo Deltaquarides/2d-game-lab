@@ -12,7 +12,7 @@ export class Camera {
   }
   update() {
     const playerX = this.player.position.x;
-    const playerY = this.player.hitbox.position.y;
+    const playerY = this.player.position.y;
     //scroll the scene only if player pass the scrollPostRight
     if (playerX > this.scrollPostRight) {
       this.x = playerX - this.scrollPostRight; //distance between the player and scrollPostRight

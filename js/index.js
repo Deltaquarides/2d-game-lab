@@ -56,6 +56,10 @@ function animate() {
       .then(() => {
         player.update(ctx, canvas); // Update position + draw new frame
         enemies.forEach((enemy) => enemy.update()); //enemy.update();
+
+        //  Remove dead enemies after explosion animation is done
+        enemies = enemies.filter((enemy) => !enemy.markedForDeletion);
+
         // Draw collision boxes (for debugging)
         map.collisionBlocks.forEach((block) => block.draw(ctx));
         camera.drawDebug();
