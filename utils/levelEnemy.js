@@ -1,3 +1,5 @@
+// array of position objects for each level
+
 export const level1Enemies = [
   { x: 40, y: 10 },
   { x: 200, y: 100 },
