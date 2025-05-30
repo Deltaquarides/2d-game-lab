@@ -1,7 +1,7 @@
 // Implement scrolling functionality.
 // create blocks,(scrollPostRight,scrollPostTop) to scrolll the scene in the x and y axis.
 export class Camera {
-  constructor(ctx, player) {
+  constructor({ ctx, player }) {
     this.x = 0;
     this.y = 0;
     this.scrollPostRight = 600;
@@ -10,6 +10,7 @@ export class Camera {
     this.ctx = ctx;
     this.player = player;
   }
+
   update() {
     const playerX = this.player.position.x;
     const playerY = this.player.position.y;
@@ -25,9 +26,11 @@ export class Camera {
       this.y = 0;
     }
   }
+
   applyTransform() {
     this.ctx.translate(-this.x, this.y);
   }
+
   drawDebug() {
     this.ctx.save();
     this.ctx.fillStyle = "orange";

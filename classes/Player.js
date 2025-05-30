@@ -1,9 +1,19 @@
-import { spriteConfigs } from "../utils/spriteConfigs.js";
+//import { spriteConfigs } from "../utils/spriteConfigs.js";
+import { getSpriteHandler } from "../utils/preloadSprites.js";
 
 let gravity = 0.5;
 
 export class Player {
-  constructor(x, y, collisionBlocks = [], mapBoundaries = null) {
+  constructor({
+    x,
+    y,
+    collisionBlocks = [],
+    mapBoundaries = null,
+    hearts = null,
+  }) {
+    this.playerIsDead = false;
+    this.hearts = hearts;
+
     this.position = {
       x: x,
       y: y,
@@ -33,91 +43,123 @@ export class Player {
     //default sprite Start with idle animation
     this.facing = "right";
     this.state = "idle"; // Track the current state: idle, walking, jumping, etc.
-    this.imgRenderer = spriteConfigs.idle.handler; // Render by default the first sprite as idle state.
+
+    this.imgRenderer = getSpriteHandler("idle");
+    this.deathRenderer = getSpriteHandler("playerDeathSprite");
+    if (!this.imgRenderer) {
+      console.log("Failed to load sprite handler for 'idle'");
+    } // Render by default the first sprite as idle state.
     this.collisionBlocks = collisionBlocks; // from colllisionsBlock class Map
     this.mapBoundaries = mapBoundaries;
     //console.log("Map boundaries received by Player:", this.mapBoundaries);
+
+    //will defined opcaticy of player when collide
+    this.invinsible = false;
+  }
+
+  //when player is hit change opacity
+  setIsInvisible() {
+    this.invinsible = true;
+    setTimeout(() => {
+      this.invinsible = false;
+    }, 1000);
+  }
+
+  setIsPlayerDead() {
+    this.playerIsDead = true;
   }
 
   //now we need an update method to: change position using "velocity", applying gravity,
   //check collisions draws the player in the new position
-  update(ctx, canvas) {
-    this.updateHitbox(); //Any time you change position.x or position.y, call updateHitbox()
+  update(ctx) {
+    if (!this.playerIsDead) {
+      this.updateHitbox(); //Any time you change position.x or position.y, call updateHitbox()
+      //console.log("position y:", this.position.x, "position x:", this.position.y);
+      this.position.x = this.position.x + this.velocity.x; // if velocity is for ex: +3 player will move to the right if négatif move to left.
+      this.updateHitbox();
 
-    this.position.x = this.position.x + this.velocity.x; // if velocity is for ex: +3 player will move to the right if négatif move to left.
-    this.updateHitbox();
+      this.checkForHorizontalCollisions();
 
-    this.checkForHorizontalCollisions();
+      this.applyGravity();
+      this.updateHitbox();
 
-    this.applyGravity();
-    this.updateHitbox();
+      this.checkForVerticalCollisions();
+      this.checkForMapBoundaryCollisions();
 
-    this.checkForVerticalCollisions();
-    this.checkForMapBoundaryCollisions();
+      //console.log("Player Y:", this.position.y, "Velocity Y:", this.velocity.y);
+    }
+    this.draw(ctx);
+  }
 
-    //console.log("Player Y:", this.position.y, "Velocity Y:", this.velocity.y);
+  draw(ctx) {
+    ctx.save();
 
-    if (this.imgRenderer) {
-      this.imgRenderer.animate(); // animate and draw method from class imgeHandler
-      //this.handleAnimation();
-      ctx.save();
-      this.imgRenderer.draw(
+    const renderer = this.playerIsDead ? this.deathRenderer : this.imgRenderer;
+    // Set transparency if invincible
+    ctx.globalAlpha = this.invinsible && this.playerIsDead === false ? 0.5 : 1;
+
+    if (renderer) {
+      renderer.animate(); // animate and draw method from class imgeHandler
+      renderer.draw(
         ctx,
         this.position.x,
         this.position.y,
         this.width,
         this.height
       );
-      //hitbox
-      ctx.strokeStyle = "red";
-      ctx.strokeRect(this.position.x, this.position.y, this.width, this.height);
-      ctx.fillStyle = "rgba(6, 27, 221, 0.5";
-      ctx.fillRect(
-        this.hitbox.position.x,
-        this.hitbox.position.y,
-        this.hitbox.width,
-        this.hitbox.height
-      );
-      //map edge
-      if (this.mapBoundaries) {
-        ctx.beginPath();
-        ctx.lineWidth = 5;
-        ctx.strokeStyle = "rgba(245, 221, 88, 0.5)";
-        ctx.moveTo(this.mapBoundaries.topEdge, this.mapBoundaries.leftEdge);
-        ctx.lineTo(
-          this.mapBoundaries.topEdge,
-          this.mapBoundaries.bottomEdge / 1.5
-        );
-        ctx.stroke();
-        //console.log(this.mapBoundaries.bottomEdge);
-        ctx.beginPath();
-        ctx.lineWidth = 5;
-        ctx.strokeStyle = "rgba(245, 221, 88, 0.5)";
-        ctx.moveTo(this.mapBoundaries.topEdge, this.mapBoundaries.leftEdge);
-        ctx.lineTo(this.mapBoundaries.rightEdge, this.mapBoundaries.topEdge);
-        ctx.stroke();
+    } else {
+      console.log("No valid sprite renderer available!");
+    }
 
-        ctx.stroke();
-        //console.log(this.mapBoundaries.bottomEdge);
-        ctx.beginPath();
-        ctx.lineWidth = 5;
-        ctx.strokeStyle = "rgba(245, 221, 88, 0.5)";
-        ctx.moveTo(this.mapBoundaries.rightEdge, this.mapBoundaries.leftEdge);
-        ctx.lineTo(
-          this.mapBoundaries.rightEdge,
-          this.mapBoundaries.bottomEdge / 1.5
-        );
-        ctx.stroke();
-      }
-
-      ctx.fillRect(
-        this.hitbox.position.x,
-        this.hitbox.position.y,
-        this.hitbox.width,
-        this.hitbox.height
+    //hitbox
+    ctx.strokeStyle = "red";
+    ctx.strokeRect(this.position.x, this.position.y, this.width, this.height);
+    ctx.fillStyle = "rgba(6, 27, 221, 0.5";
+    ctx.strokeRect(
+      this.hitbox.position.x,
+      this.hitbox.position.y,
+      this.hitbox.width,
+      this.hitbox.height
+    );
+    //map edge
+    if (this.mapBoundaries) {
+      ctx.beginPath();
+      ctx.lineWidth = 5;
+      ctx.strokeStyle = "rgba(245, 221, 88, 0.5)";
+      ctx.moveTo(this.mapBoundaries.topEdge, this.mapBoundaries.leftEdge);
+      ctx.lineTo(
+        this.mapBoundaries.topEdge,
+        this.mapBoundaries.bottomEdge / 1.5
       );
-      ctx.restore();
-    } else console.error("imgRenderer is not set!");
+      ctx.stroke();
+      //console.log(this.mapBoundaries.bottomEdge);
+      ctx.beginPath();
+      ctx.lineWidth = 5;
+      ctx.strokeStyle = "rgba(245, 221, 88, 0.5)";
+      ctx.moveTo(this.mapBoundaries.topEdge, this.mapBoundaries.leftEdge);
+      ctx.lineTo(this.mapBoundaries.rightEdge, this.mapBoundaries.topEdge);
+      ctx.stroke();
+
+      ctx.stroke();
+      //console.log(this.mapBoundaries.bottomEdge);
+      ctx.beginPath();
+      ctx.lineWidth = 5;
+      ctx.strokeStyle = "rgba(245, 221, 88, 0.5)";
+      ctx.moveTo(this.mapBoundaries.rightEdge, this.mapBoundaries.leftEdge);
+      ctx.lineTo(
+        this.mapBoundaries.rightEdge,
+        this.mapBoundaries.bottomEdge / 1.5
+      );
+      ctx.stroke();
+    }
+
+    ctx.fillRect(
+      this.hitbox.position.x,
+      this.hitbox.position.y,
+      this.hitbox.width,
+      this.hitbox.height
+    );
+    ctx.restore();
   }
 
   //method to sync the hitbox to the current player position: box will move while player move

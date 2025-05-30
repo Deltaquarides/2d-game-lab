@@ -1,39 +1,45 @@
 import { createImage } from "../utils/createImage.js";
 
+//animate all sprite
 export class ImageHandler {
-  constructor(src, totalCols, totalRows, frameY) {
-    this.totalRows = totalRows;
-
+  constructor({ src, cols, rows, frameY, frameSpeed = 7, loopOnce = false }) {
     // Will be calculated when image loads
     this.spriteWidth = 0;
     this.spriteHeight = 0;
 
     // Sprite crop settings
-    this.frameX = 0;
+    this.src = src;
+    this.cols = cols;
+    this.rows = rows;
     this.frameY = frameY; // ← second row (0-indexed)
-    this.totalCols = totalCols;
+    this.frameSpeed = frameSpeed; // Controls how fast the frames change (higher = slower)
+    this.loopOnce = loopOnce;
 
-    this.frameSpeed = 7; // Controls how fast the frames change (higher = slower)
+    this.frameX = 0;
     this.frameTimer = 0; // Keeps track of time for switching frames
 
     this.loaded = false; // custom flag confirming the image finished loading
-    //this.isJumping = false;
+
+    this.loopOnce = loopOnce; //  controls if animation should only play once
+    this.playedOnce = false; //  flag to track if it already played
 
     // handling the promise: onload the image
-    createImage(src)
+    createImage(this.src)
       .then((image) => {
         this.image = image; //store the loaded image
-        this.spriteWidth = this.image.width / this.totalCols; // Calculate sprite width
-        this.spriteHeight = this.image.height / this.totalRows; // Calculate sprite height
+        this.spriteWidth = this.image.width / this.cols; // Calculate sprite width
+        this.spriteHeight = this.image.height / this.rows; // Calculate sprite height
         this.loaded = true; //  set when ready
       })
-      .catch((error) => console.error("Image failed to load", error)); // Handle image load error
+      .catch((error) =>
+        console.error("Image failed to load", error, this.image)
+      ); // Handle image load error
   }
 
   // !!!!!!  i keep "get src()" just in case if i need the source in another file but not usefull here//
-  get src() {
-    return this.image?.src;
-  }
+  //get src() {
+  //return this.image?.src;
+  //}
 
   //draw method visually render the player on the canvas,
   //by it's color and drawing a rectancle by it's positions: x,y and shape: width (how wide), height(how tall)
@@ -66,18 +72,24 @@ export class ImageHandler {
   //in other terms its animation frames
 
   animate() {
-    if (!this.loaded) return; // don't animate until ready
+    if (!this.loaded || (this.loopOnce && this.playedOnce)) return; // don't animate until ready
 
     this.frameTimer++; // Increment frame timer
 
     // If the frame timer reaches the frameSpeed, switch to the next frame
     if (this.frameTimer >= this.frameSpeed) {
       this.frameTimer = 0; // Reset frame timer
-      this.frameX++; // Move to the next frame in the sprite sheet
 
-      // If we're at the last frame, go back to the first one
-      if (this.frameX >= this.totalCols) {
-        this.frameX = 0;
+      if (this.frameX < this.cols - 1) {
+        //if end of the sprite
+        this.frameX++; // Move to the next frame in the sprite sheet
+      } else {
+        if (this.loopOnce) {
+          this.playedOnce = true; // Stop animating
+        } else {
+          // If we're at the last frame, go back to the first one
+          this.frameX = 0;
+        }
       }
     }
   }

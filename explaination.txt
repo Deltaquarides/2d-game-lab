@@ -70,4 +70,97 @@ left corner |                    |
     If we press and hold the jump key (like ArrowUp), only one jump() call is triggered.
     To trigger a double jump, the key must be released and pressed again before landing.
     But in our case, the second press might not be triggering correctly, or it's being ignored if the key is still "held down" in the Set.
+
+         **** explaination about  enemy death ****
+
+         **** explaination about animation frame ****
+
+         **** explaination about  cooldown timer****
+
+         pb: all hearts are disapearing  as long as the enemy is in contact with player, 
+         solution: add a cooldown timer to limit how often the player can get hit.
+
+         cooldown would be an utility function not a class because ennemy or weapon would use it.
+
+         MISTAKE: i did the following: PASSING BY VALUE VS REFERENCE
+            - inside enemy class:
+               coolDown(this.hasRecentlyHitPlayer, 1000);
+            - inside coolDown:
+                  setTimeout(() => {
+                  isCoolingDown = false;
+                  }, 1000);
+         
+         EXPLANATION:
+               this.hasRecentlyHitPlayer is a boolean (true or false) → a primitive type.
+               JavaScript passed a copy of the value, not the original.
+               So setting isCoolingDown = false only changed the local variable inside the function, not the original property on this.
+
+         SOLUTION: 
+               to change the original property value: pass the object (this) and the property name:
+               coolDown(this, "hasRecentlyHitPlayer", false, 1000);
+               and now we  can directly change the actual property on the object:
+               setTimeout(() => {object[property] = valueAfterCooldown;}, duration); 
+
+         CONCLUSION: 
+               to modify the original value of the object(itself) we pass the object and property name(as a string). 
+               not a primitive value who change locally.
+
+
+         **** explaination about  init() logic****
+
+                Here we are creating a function init() stands for initialisation/to restart the game.
+                init() is not built-in, but it's a commonly used custom method/function name.
+
+TRICKY CONCEPT: 
+1. PASSING BY VALUE VS REFERENCE
+2. ASYNCHRONOUS TIMING WITH seTimout 
+3. SCOPING
+4. CALLBACKS
+5. HOISTED
+
+MISTAKE: 
+      OBEJCT VS VALUE IN PARAMS:
+            - passed value in params, then in the constructor, they must be declared in the exact same order.
+            ex: new ImageHandler(src, cols, rows, frameY, loopOnce, frameSpeed);
+            constructor(src, totalCols, totalRows, frameY, loopOnce, frameSpeed)
+            -solution pass object instead instead, can pass values out of order:
+            ex: new ImageHandler({src: "...",totalCols: 7, totalRows: 1, frameY: 0, loopOnce: false, frameSpeed: 30,});
+
+
+         **** ACTIONS BASED FUNCTION / PURE FUNCTIONS / IMPURE / RETURN  ****
+
+ example find in global_utilities: 
+      even if createSpriteRenderer return something it is not considerd a pure function because
+      it had side effects(like logging:console.log, modifying/reads external state:spriteConfig", DOM, etc.)
+       in summary it's an impure helper function that returns a value but also causes side effects by accessing external 
+      state and logging, so it’s not a pure function nor a purely action-based one.
+
+ Question: why sould we use "return" in a function?
+ Response: When we want the function to produce a result that can be used elsewhere in the code, it return that value.
+
+      Actions based funtions:
+      - used for side effects ex.: change the DOM, play audio, update state. 
+      - don't need to return something
+
+      Pure functions: 
+      For a given set of inputs, the output is always the same
+      - no side effects
+      - do not modify variable outside its scope.
+      - no interaction with external system API, database,DOM manipulation
+      - they do not change the input *values but instead they return a new value or object.
+
+      conclusions:
+      - Pure function = returns value + no side effects + deterministic
+      - Your function = returns value + has side effects → impure
+
+      impure function ---> function(a,b){const result = a+b console.log(result);return result}
+      pure function ---> function(a,b){const result = a+b return result}
+      Action-based function: causes side effects + may or may not return value → impure
+
+
+
+
+
+
  */
+       

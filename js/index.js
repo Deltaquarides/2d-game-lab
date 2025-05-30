@@ -5,40 +5,70 @@ import { Map } from "../classes/map.js";
 import { Camera } from "../classes/camera.js";
 import { Enemy } from "../classes/ennemy.js";
 import { level1Enemies } from "../utils/levelEnemy.js";
+import { Heart } from "../classes/heart.js";
+import { introLevel } from "../utils/global_utilities.js";
 
 const canvas = document.getElementById("myCanvas"); //retrieves the node in the DOM representing the <canvas>
 canvas.width = window.innerWidth;
 canvas.height = 980; //window.innerHeight;
 const ctx = canvas.getContext("2d"); // Once we have the element node, we can access the drawing context using its getContext() method
-console.log(ctx);
 
 //levels of the game
-const map = new Map();
+let map = new Map();
 
 // Preload sprites before creating player, all sprite are ready!!!
-
 let player;
 let camera;
 let enemies = [];
-console.log("level1Enemies", level1Enemies);
+let hearts = [];
+const heartCount = 5;
+
+introLevel("Shy Hills Zone", "ACT 1");
 
 map.ready.then(() => {
-  preloadSprites();
+  preloadSprites().then(() => {
+    player = new Player({
+      x: 400,
+      y: 100,
+      collisionBlocks: map.collisionBlocks,
+      mapBoundaries: map.mapBoundaries,
+      hearts,
+    });
+    eventListeners(player); // pass the object player to eventListeners as an argument so it can acces for ex player.velocity ect...
+    camera = new Camera({ ctx, player });
+    enemies = level1Enemies.map((pos) => {
+      return new Enemy({
+        ctx: ctx,
+        collisionBlocks: map.collisionBlocks,
+        enemyPositions: pos,
+        player,
+        hearts,
+      });
+    });
 
-  player = new Player(400, 100, map.collisionBlocks, map.mapBoundaries);
-  eventListeners(player, canvas); // pass the object player to eventListeners as an argument so it can acces for ex player.velocity ect...
-  camera = new Camera(ctx, player);
-  enemies = level1Enemies.map((pos) => {
-    return new Enemy(ctx, map.collisionBlocks, pos, player);
+    for (let i = 0; i < heartCount; i++) {
+      hearts.push(
+        new Heart({
+          x: 15 + i * 20,
+          y: 10,
+          width: 16,
+          height: 16,
+          imageSrc: "../images/hearts.png",
+        })
+      );
+    }
+    animate();
   });
-  console.log("Created enemies", enemies);
 });
 
 function animate() {
   try {
-    if (!camera) return requestAnimationFrame(animate); // Wait until camera is ready
+    if (!camera) {
+      requestAnimationFrame(animate);
+      return;
+    }
+    // Wait until camera is ready
 
-    // console.log("Animating frame...");
     ctx.clearRect(0, 0, canvas.width, canvas.height); // Clear old frame
 
     // Save transformation state
@@ -48,32 +78,31 @@ function animate() {
     camera.update();
     camera.applyTransform();
     // Wait for the map to load before drawing. Everything is drawn in order, the last thing drawn appears on top.
-    map.ready
-      .then(() => {
-        ctx.imageSmoothingEnabled = false; // This property is useful for games and other apps that use pixel art. When enlarging images, the default resizing algorithm will blur the pixels. Set this property to false to retain the pixels' sharpness.
-        map.drawMap(ctx);
-      })
-      .then(() => {
-        player.update(ctx, canvas); // Update position + draw new frame
-        enemies.forEach((enemy) => enemy.update()); //enemy.update();
 
-        //  Remove dead enemies after explosion animation is done
-        enemies = enemies.filter((enemy) => !enemy.markedForDeletion);
+    ctx.imageSmoothingEnabled = false; // This property is useful for games and other apps that use pixel art. When enlarging images, the default resizing algorithm will blur the pixels. Set this property to false to retain the pixels' sharpness.
+    map.drawMap(ctx);
 
-        // Draw collision boxes (for debugging)
-        map.collisionBlocks.forEach((block) => block.draw(ctx));
-        camera.drawDebug();
-      })
+    player.update(ctx); // Update position + draw new frame
 
-      .finally(() => {
-        ctx.restore(); // Restore default canvas state (no scale, no translate)
+    enemies.forEach((enemy) => enemy.update()); //enemy.update();
+    //  Remove dead enemies after explosion animation is done
+    enemies = enemies.filter((enemy) => !enemy.markedForDeletion);
 
-        //player.update(ctx, canvas); // Update position + draw new frame
-        requestAnimationFrame(animate); // Loop again
-        //console.log("go");
-      });
+    // Remove Hearts
+    //hearts = hearts.filter((heart) => !heart.markedForDeletion);
+    hearts.forEach((heart) => heart.update(ctx));
+
+    // Draw collision boxes (for debugging)
+    map.collisionBlocks.forEach((block) => block.draw(ctx));
+    if (camera) {
+      camera.drawDebug();
+    }
+
+    ctx.restore(); // Restore default canvas state (no scale, no translate)
+
+    //player.update(ctx, canvas); // Update position + draw new frame
+    requestAnimationFrame(animate); // Loop again
   } catch (err) {
     console.error("Animation error:", err); // This will tell where it crashes
   }
 }
-animate();

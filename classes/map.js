@@ -71,7 +71,13 @@ export class Map {
             "decorations height:",
             decorations.height
           );
-          //console.log("layer1 length:", layer1.length);
+          if (tileset.width === 0 || tileset.height === 0) {
+            console.warn("Tileset image failed to load properly.");
+          }
+          if (decorations.width === 0 || decorations.height === 0) {
+            console.warn("⚠️ Decorations failed to load: width or height is 0");
+          }
+          //console.log("layer1 length:", layer1);
           this.mapHeight = layer1.length;
           this.mapWidth = layer1[1].length;
           this.mapBoundaries = {
@@ -82,6 +88,7 @@ export class Map {
           };
         }
       )
+
       .catch((err) => {
         console.error("Failed to load map or images:", err);
       });

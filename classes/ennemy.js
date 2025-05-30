@@ -1,5 +1,8 @@
 import { spriteConfigs } from "../utils/spriteConfigs.js";
+import { getSpriteHandler } from "../utils/preloadSprites.js";
 import { ImageHandler } from "./imageHandler.js";
+import { removeHeart } from "../utils/heartManager.js";
+import { coolDown, createSpriteRenderer } from "../utils/global_utilities.js";
 
 /*
     - defined enemy postions width and height
@@ -9,21 +12,23 @@ import { ImageHandler } from "./imageHandler.js";
     - add collision for the enely to stay on ground
 */
 export class Enemy {
-  constructor(
+  constructor({
     ctx,
     collisionBlocks = [],
     enemyPositions = { x: 0, y: 0 },
-    player = null
-  ) {
+    player = null,
+    hearts = null,
+  }) {
     //player class
     this.player = player;
+    this.hearts = hearts; //same array shared shared between the Enemy and the main game file, reference to 3 hearts
 
     this.position = {
       x: enemyPositions.x,
       y: enemyPositions.y,
     };
-    this.width = 32;
-    this.height = 32;
+    this.width = 64;
+    this.height = 64;
 
     this.hitbox = {
       position: {
@@ -43,10 +48,10 @@ export class Enemy {
 
     this.speed = 1; // patrol speed
     this.direction = 1; // 1 = right, -1 = left
-    this.patrolrange = 50;
+    this.patrolrange = 100;
     this.minX = this.position.x - this.patrolrange;
     this.maxX = this.position.x + this.patrolrange;
-    this.detectionRange = 70;
+    this.detectionRange = 100;
     this.activated = false;
 
     //flags to remove enemy after explosion
@@ -56,6 +61,11 @@ export class Enemy {
     this.isOnGround = false; // ← track grounded state
     this.collisionBlocks = collisionBlocks;
     this.ctx = ctx;
+
+    this.hasRecentlyHitPlayer = false;
+
+    //each enemy  has his own copy of enemyLuxmn animation.(cf.preloadSprites)
+    this.enemyLuxmnRenderer = createSpriteRenderer("enemyLuxmn");
   }
 
   update() {
@@ -129,6 +139,7 @@ export class Enemy {
     this.isOnGround = landed;
   }
 
+  //collisions between enemy and blocks horizontally
   checkHorizontalCollisions() {
     for (const block of this.collisionBlocks) {
       const blockTop = block.position.y;
@@ -202,65 +213,99 @@ export class Enemy {
     //4.determine which side the player hit the enemy and act accordingly:
     // -if player on top of the ennemy, player bounce and  ennemy explode and disapear*
     // -if player collide left right or bottom player transparent and takes damages
-    if (
-      object1.hitbox.position.y + object1.hitbox.height <=
-      object2.hitbox.position.y + 5
-    ) {
+    // Determine if player is hitting from the top
+    const playerBottom = object1.hitbox.position.y + object1.hitbox.height;
+    const enemyMidY = object2.hitbox.position.y + object2.height / 2;
+
+    const isTopHit =
+      object1.velocity.y > 0 && // player must be falling
+      playerBottom <= enemyMidY; // player is above midpoint of enemy
+
+    if (isTopHit) {
       console.log("player hit from top");
       object1.velocity.y = -5;
 
       //each exploding enemy has its own copy of the explosion animation.(cf.preloadSprites)
-      const config = spriteConfigs.enemyExplode;
-      const baseHandler = config.handler; // already loaded via preloadSprites()
-      this.imgRenderer = new ImageHandler(
-        config.src,
-        config.cols,
-        config.rows,
-        config.frameY
-      );
-      this.imgRenderer.image = baseHandler.image; //@ assigning the loaded image (the sprite sheet) from baseHandler to the imgRenderer.
-      this.imgRenderer.loaded = true;
-      this.config = this.imgRenderer; // Set `this.config` to the explosion handler
+
+      this.explosionRenderer = createSpriteRenderer("enemyExplode");
+
       this.isDead = true;
     } else {
-      console.log(
-        "Player hit from side or bottom — player takes damage or bounces"
-      );
+      if (!this.hasRecentlyHitPlayer) {
+        this.hasRecentlyHitPlayer = true;
+
+        this.player.setIsInvisible(); //change opacity when hit
+
+        removeHeart(this.hearts); // remove 1 heart only
+
+        coolDown(this, "hasRecentlyHitPlayer", false, 1000);
+      } else if (this.hearts.length === 0) {
+        this.player.setIsPlayerDead();
+
+        setTimeout(() => {
+          GameOverElement();
+        }, 1000);
+
+        function GameOverElement() {
+          const titleElement = document.getElementById("titleOver");
+          if (titleElement) {
+            //run after the DOM is ready otherwise null reference
+
+            titleElement.innerText = "GAME OVER";
+            titleElement.classList.add("gameOver");
+          }
+        }
+      }
     }
   }
 
   draw() {
     // If enemy has been hit from top, show explosion
-    if (this.isDead && this.imgRenderer && this.imgRenderer.loaded) {
-      this.config.animate(); // Play animation from imgHandler method
+    if (
+      this.isDead &&
+      this.explosionRenderer &&
+      this.explosionRenderer.loaded
+    ) {
+      this.explosionRenderer.animate(); // Play explosion animation from imgHandler method
 
-      this.config.draw(
+      this.explosionRenderer.draw(
         //draw method from imgHandler
+        this.ctx,
+        this.position.x,
+        this.position.y + 35,
+        35,
+        35
+      );
+
+      //is we are the end of the sprite loop markForDeletion is true
+      if (this.explosionRenderer.frameX === this.explosionRenderer.cols - 1) {
+        this.markedForDeletion = true;
+      }
+    } else if (this.enemyLuxmnRenderer && this.enemyLuxmnRenderer.loaded) {
+      this.enemyLuxmnRenderer.animate();
+      this.enemyLuxmnRenderer.draw(
         this.ctx,
         this.position.x,
         this.position.y,
         this.width,
         this.height
       );
-      if (this.imgRenderer.frameX === this.imgRenderer.totalCols - 1) {
-        this.markedForDeletion = true;
-      }
-    } else {
-      //debug
-      this.ctx.fillStyle = "red";
-      this.ctx.fillRect(
-        this.position.x,
-        this.position.y,
-        this.width,
-        this.height
-      );
       //debug hitbox
-      this.ctx.fillStyle = "green";
-      this.ctx.fillRect(
+      this.ctx.strokeStyle = "red";
+      this.ctx.strokeRect(
         this.hitbox.position.x,
         this.hitbox.position.y,
         this.hitbox.width,
         this.hitbox.height
+      );
+
+      //debug
+      this.ctx.strokeStyle = "blue";
+      this.ctx.strokeRect(
+        this.position.x,
+        this.position.y,
+        this.width,
+        this.height
       );
     }
   }
@@ -269,11 +314,11 @@ export class Enemy {
 /* * to make the enemy disapear:
  1. Create a variable isDead and set it the true when player collide on top. this.isDead = true
  2. If enemy is dead, img sprite exist, and explosion animation reached last frame, flag it for deletion. /inside draw or update method/
-      - if (this.isDead && this.imgRenderer &&  this.imgRenderer.frameX === this.imgRenderer.totalCols - 1)
+      - if (this.isDead && this.explosionRenderer &&  this.explosionRenderer.frameX === this.explosionRenderer.totalCols - 1)
       - Animation finished, mark for removal: this.markedForDeletion = true;
 
   @  baseHandler avoid us to reload the image and ensure that is the same loaded  sprite sheet we are using and then with 
-    this.imgRenderer we create another instance in order to all the enemy to have their own explosions sprite? and why don't 
-    we wrote  this.imgRenderer.image = baseHandler.image; before creating a new instance
+    this.explosionRenderer we create another instance in order to all the enemy to have their own explosions sprite? and why don't 
+    we wrote  this.explosionRenderer.image = baseHandler.image; before creating a new instance
 
 */
