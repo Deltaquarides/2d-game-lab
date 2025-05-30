@@ -63,4 +63,16 @@ export const spriteConfigs = {
     totalRows: 1,
     frameY: 0,
   },
+  enemyAmazonLeft: {
+    src: "/images/amazon/amazon_left.png",
+    totalCols: 8,
+    totalRows: 1,
+    frameY: 0,
+  },
+  enemyAmazonRight: {
+    src: "/images/amazon/right.png",
+    totalCols: 8,
+    totalRows: 1,
+    frameY: 0,
+  },
 };
