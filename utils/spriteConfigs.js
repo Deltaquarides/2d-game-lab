@@ -61,7 +61,6 @@ export const spriteConfigs = {
       loopOnce: true,
     },
   },
-
   enemyLuxmn: {
     src: "/images/enemyLuxmn.png",
     totalCols: 7,
