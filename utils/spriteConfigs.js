@@ -60,12 +60,21 @@ export const spriteConfigs = {
       frameY: 0,
       loopOnce: true,
     },
+    enemyExplode2: {
+      src: "/images/Explosion.png",
+      totalCols: 6,
+      totalRows: 1,
+      frameY: 0,
+      loopOnce: true,
+    },
   },
-  enemyLuxmn: {
-    src: "/images/enemyLuxmn.png",
-    totalCols: 7,
-    totalRows: 1,
-    frameY: 0,
+  mignon: {
+    enemyLuxmn: {
+      src: "/images/enemyLuxmn.png",
+      totalCols: 7,
+      totalRows: 1,
+      frameY: 0,
+    },
   },
   enemyAmazon: {
     left: {

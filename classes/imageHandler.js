@@ -31,9 +31,12 @@ export class ImageHandler {
         this.spriteHeight = this.image.height / this.rows; // Calculate sprite height
         this.loaded = true; //  set when ready
       })
-      .catch((error) =>
-        console.error("Image failed to load", error, this.image)
-      ); // Handle image load error
+      .catch((error) => {
+        if (!this.src) {
+          console.log(this.src);
+        }
+        console.error("Image failed to load", error, this.image);
+      }); // Handle image load error
   }
 
   // !!!!!!  i keep "get src()" just in case if i need the source in another file but not usefull here//

@@ -19,40 +19,41 @@ const loadedSprites = {}; // Shared sprite cache
 
 export function preloadSprites() {
   const promises = [];
+  for (const [groupKey, groupValue] of Object.entries(spriteConfigs)) {
+    for (const [spriteKey, config] of Object.entries(groupValue)) {
+      // spriteConfigs contains src files, files, rows, colums...
 
-  for (const key in spriteConfigs) {
-    // spriteConfigs contains src files, files, rows, colums...
-    const config = spriteConfigs[key];
+      // here we attach a single ImageHandler instance to spriteConfig by assigning it to each config.handler,
+      //later in eventListeners we assign that handler to player.imgRenderer.
+      //This allows the Player class to use the animate() and draw() methods from ImageHandler during the game loop
+      //in index.js, we call preloadSprites() befor calling making a new instance of Player.
+      // loaded here reference to this.loaded in ImageHandler class
 
-    // here we attach a single ImageHandler instance to spriteConfig by assigning it to each config.handler,
-    //later in eventListeners we assign that handler to player.imgRenderer.
-    //This allows the Player class to use the animate() and draw() methods from ImageHandler during the game loop
-    //in index.js, we call preloadSprites() befor calling making a new instance of Player.
-    // loaded here reference to this.loaded in ImageHandler class
+      const handler = new ImageHandler({
+        // Create and assign a single ImageHandler for each sprite state.
+        // This prevents reloading the same image multiple times.
+        src: config.src,
+        cols: config.totalCols, // pass totalCols as cols
+        rows: config.totalRows, // pass totalRows as rows
+        frameY: config.frameY,
+        frameSpeed: config.frameSpeed || 7, // default if not set
+        loopOnce: config.loopOnce || false, // default if not set
+      });
+      loadedSprites[spriteKey] = handler;
 
-    const handler = new ImageHandler({
-      // Create and assign a single ImageHandler for each sprite state.
-      // This prevents reloading the same image multiple times.
-      src: config.src,
-      cols: config.totalCols, // pass totalCols as cols
-      rows: config.totalRows, // pass totalRows as rows
-      frameY: config.frameY,
-      frameSpeed: config.frameSpeed || 7, // default if not set
-      loopOnce: config.loopOnce || false, // default if not set
-    });
-    loadedSprites[key] = handler;
-
-    const waitUntilLoaded = new Promise((resolve) => {
-      const checkLoaded = () => {
-        if (handler.loaded) {
-          resolve(); // image is loaded, resolve this promise
-        } else {
-          requestAnimationFrame(checkLoaded); // check again on the next frame
-        }
-      };
-      checkLoaded();
-    });
-    promises.push(waitUntilLoaded);
+      console.log("laodedSprite", loadedSprites);
+      const waitUntilLoaded = new Promise((resolve) => {
+        const checkLoaded = () => {
+          if (handler.loaded) {
+            resolve(); // image is loaded, resolve this promise
+          } else {
+            requestAnimationFrame(checkLoaded); // check again on the next frame
+          }
+        };
+        checkLoaded();
+      });
+      promises.push(waitUntilLoaded);
+    }
   }
   return Promise.all(promises); // Return one promise that waits for ALL images to load
 }
@@ -60,6 +61,9 @@ export function preloadSprites() {
 //getter function to access
 export function getSpriteHandler(name) {
   const handler = loadedSprites[name];
+  if (!handler) {
+    console.log(`sprite not loaded ${name}`);
+  }
   return handler;
 }
 

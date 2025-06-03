@@ -48,12 +48,14 @@ export const introLevel = (levelName, levelNumber) => {
 //Creates a new ImageHandler instance so each sprite(enemy, explosion, etc.)can animate independently- no shared frame state.
 //  reusable for any sprite type(enemies explosions, etc.)
 
-export const createSpriteRenderer = (spriteKey) => {
+export const createSpriteRenderer = (spriteName, spriteKey) => {
   if (!spriteKey) {
     console.log("no sprite Key", spriteKey);
     return null;
   }
-  const config = spriteConfigs[spriteKey];
+
+  const config = spriteConfigs[spriteName][spriteKey];
+
   if (!config) {
     console.log("No sprite config found for key", config);
     return null;

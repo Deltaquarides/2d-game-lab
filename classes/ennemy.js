@@ -1,6 +1,3 @@
-import { spriteConfigs } from "../utils/spriteConfigs.js";
-import { getSpriteHandler } from "../utils/preloadSprites.js";
-import { ImageHandler } from "./imageHandler.js";
 import { removeHeart } from "../utils/heartManager.js";
 import { coolDown, createSpriteRenderer } from "../utils/global_utilities.js";
 
@@ -18,6 +15,7 @@ export class Enemy {
     enemyPositions = { x: 0, y: 0 },
     player = null,
     hearts = null,
+    spriteType,
   }) {
     //player class
     this.player = player;
@@ -64,8 +62,16 @@ export class Enemy {
 
     this.hasRecentlyHitPlayer = false;
 
-    //each enemy  has his own copy of enemyLuxmn animation.(cf.preloadSprites)
-    this.enemyLuxmnRenderer = createSpriteRenderer("enemyLuxmn");
+    this.spriteType = spriteType;
+    console.log(this.spriteType);
+    if (this.spriteType === "enemyLuxmn") {
+      //each enemy  has his own copy of enemyLuxmn animation.(cf.preloadSprites)
+      this.enemyLuxmnRenderer = createSpriteRenderer("mignon", "enemyLuxmn");
+    } else if (this.spriteType === "enemyAmazon") {
+      this.enemyLuxmnRenderer = createSpriteRenderer("enemyAmazon", "left");
+    } else {
+      console.log(`sprite type is undefined :${this.spriteType} `);
+    }
   }
 
   update() {
@@ -227,7 +233,7 @@ export class Enemy {
 
       //each exploding enemy has its own copy of the explosion animation.(cf.preloadSprites)
 
-      this.explosionRenderer = createSpriteRenderer("enemyExplode");
+      this.explosionRenderer = createSpriteRenderer("effects", "enemyExplode");
 
       this.isDead = true;
     } else {
@@ -283,6 +289,8 @@ export class Enemy {
       }
     } else if (this.enemyLuxmnRenderer && this.enemyLuxmnRenderer.loaded) {
       this.enemyLuxmnRenderer.animate();
+
+      // this enemy draws itself, using its own this.position.
       this.enemyLuxmnRenderer.draw(
         this.ctx,
         this.position.x,

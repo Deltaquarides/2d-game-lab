@@ -36,6 +36,8 @@ map.ready.then(() => {
     });
     eventListeners(player); // pass the object player to eventListeners as an argument so it can acces for ex player.velocity ect...
     camera = new Camera({ ctx, player });
+
+    //for each {x,y} in the array create a new instance of enemy, pass enemyPositions: pos, to the constructor.
     enemies = level1Enemies.map((pos) => {
       return new Enemy({
         ctx: ctx,
@@ -43,6 +45,7 @@ map.ready.then(() => {
         enemyPositions: pos,
         player,
         hearts,
+        spriteType: pos.type || "enemyLuxmn",
       });
     });
 
