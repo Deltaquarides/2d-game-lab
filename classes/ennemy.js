@@ -224,6 +224,9 @@ export class Enemy {
     if (!object1) return console.log("player not updated");
     if (!object2) return console.log("Block not updated");
 
+    //  Skip any further collision checks if the enemy is already dead
+    if (this.isDead) return;
+
     //2. Check for AABB collision, are we colliding with the ennemy,
     const isColliding =
       object1.hitbox.position.x < object2.hitbox.position.x + object2.width &&
@@ -256,6 +259,7 @@ export class Enemy {
       this.explosionRenderer = createSpriteRenderer("effects", "enemyExplode");
 
       this.isDead = true;
+      return; //exit the checkPlayerCollision() method early after successfully detecting a top-down hit on the enemy.
     } else {
       if (!this.hasRecentlyHitPlayer) {
         this.hasRecentlyHitPlayer = true;
