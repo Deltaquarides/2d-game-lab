@@ -19,7 +19,7 @@ export class Enemy {
   }) {
     //player class
     this.player = player;
-    this.hearts = hearts; //same array shared shared between the Enemy and the main game file, reference to 3 hearts
+    this.hearts = hearts; //same array shared  between the Enemy and the main game file, reference to 3 hearts
 
     this.position = {
       x: enemyPositions.x,
@@ -63,14 +63,30 @@ export class Enemy {
     this.hasRecentlyHitPlayer = false;
 
     this.spriteType = spriteType;
-    console.log(this.spriteType);
+
     if (this.spriteType === "enemyLuxmn") {
       //each enemy  has his own copy of enemyLuxmn animation.(cf.preloadSprites)
       this.enemyLuxmnRenderer = createSpriteRenderer("mignon", "enemyLuxmn");
-    } else if (this.spriteType === "enemyAmazon") {
-      this.enemyLuxmnRenderer = createSpriteRenderer("enemyAmazon", "left");
     } else {
       console.log(`sprite type is undefined :${this.spriteType} `);
+    }
+
+    // to avoid flickering: pre-instantiate left & right facing sprite. in amazonFacePlayer switch them.
+    if (this.spriteType === "enemyAmazon") {
+      this.amazonRendererLeft = createSpriteRenderer("enemyAmazon", "left");
+      this.amazonRendererRight = createSpriteRenderer("enemyAmazon", "right");
+      this.enemyLuxmnRenderer = this.amazonRendererRight; // default direction
+    }
+  }
+
+  //always face the player, for now only amazon sprite can.
+  amazonFacePlayer() {
+    if (this.spriteType === "enemyAmazon") {
+      if (this.player.position.x + this.player.width <= this.position.x) {
+        this.enemyLuxmnRenderer = this.amazonRendererLeft;
+      } else if (this.player.position.x >= this.position.x + this.width) {
+        this.enemyLuxmnRenderer = this.amazonRendererRight;
+      }
     }
   }
 
@@ -83,7 +99,10 @@ export class Enemy {
       this.activated = true;
     }
 
-    if (this.activated && !this.isDead) {
+    if (
+      this.activated &&
+      !this.isDead /*&& this.spriteType !== "enemyAmazon"*/
+    ) {
       this.patrol();
       this.checkHorizontalCollisions();
     }
@@ -91,6 +110,7 @@ export class Enemy {
     this.checkOnGround();
 
     this.checkPlayerCollision(this.player, this); // this refer to the current enemy instance itself
+    this.amazonFacePlayer();
 
     this.draw();
   }
