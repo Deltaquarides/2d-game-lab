@@ -63,29 +63,35 @@ export class Enemy {
     this.hasRecentlyHitPlayer = false;
 
     this.spriteType = spriteType;
+    console.log(this.spriteType);
+
+    this.spit = createSpriteRenderer("weapon", "spit");
 
     if (this.spriteType === "enemyLuxmn") {
       //each enemy  has his own copy of enemyLuxmn animation.(cf.preloadSprites)
-      this.enemyLuxmnRenderer = createSpriteRenderer("mignon", "enemyLuxmn");
-    } else {
-      console.log(`sprite type is undefined :${this.spriteType} `);
+      this.currentRenderer = createSpriteRenderer("mignon", "enemyLuxmn");
     }
-
     // to avoid flickering: pre-instantiate left & right facing sprite. in amazonFacePlayer switch them.
-    if (this.spriteType === "enemyAmazon") {
+    else if (this.spriteType === "enemyAmazon") {
       this.amazonRendererLeft = createSpriteRenderer("enemyAmazon", "left");
       this.amazonRendererRight = createSpriteRenderer("enemyAmazon", "right");
-      this.enemyLuxmnRenderer = this.amazonRendererRight; // default direction
+      this.currentRenderer = this.amazonRendererRight; // default direction
+    } else if (this.spriteType === "otile") {
+      this.otileRendererLeft = createSpriteRenderer("otile", "left");
+      this.otileRendererRight = createSpriteRenderer("otile", "right");
+      this.enemyExplode2 = createSpriteRenderer("effects", "enemyExplode2");
     }
   }
 
   //always face the player, for now only amazon sprite can.
-  amazonFacePlayer() {
-    if (this.spriteType === "enemyAmazon") {
+  facePlayer() {
+    if (this.spriteType === "enemyAmazon" || this.spriteType === "otile") {
       if (this.player.position.x + this.player.width <= this.position.x) {
-        this.enemyLuxmnRenderer = this.amazonRendererLeft;
+        this.currentRenderer =
+          this.amazonRendererLeft || this.otileRendererLeft;
       } else if (this.player.position.x >= this.position.x + this.width) {
-        this.enemyLuxmnRenderer = this.amazonRendererRight;
+        this.currentRenderer =
+          this.amazonRendererRight || this.otileRendererRight;
       }
     }
   }
@@ -110,7 +116,7 @@ export class Enemy {
     this.checkOnGround();
 
     this.checkPlayerCollision(this.player, this); // this refer to the current enemy instance itself
-    this.amazonFacePlayer();
+    this.facePlayer();
 
     this.draw();
   }
@@ -290,6 +296,15 @@ export class Enemy {
   }
 
   draw() {
+    if (this.enemyExplode2 && this.enemyExplode2.loaded) {
+      //this.enemyExplode2
+      this.enemyExplode2.animate();
+      this.enemyExplode2.draw(this.ctx, 100, 100, 64, 64);
+    }
+
+    this.spit.animate();
+    this.spit.draw(this.ctx, 200, 100, 32, 32);
+
     // If enemy has been hit from top, show explosion
     if (
       this.isDead &&
@@ -311,11 +326,11 @@ export class Enemy {
       if (this.explosionRenderer.frameX === this.explosionRenderer.cols - 1) {
         this.markedForDeletion = true;
       }
-    } else if (this.enemyLuxmnRenderer && this.enemyLuxmnRenderer.loaded) {
-      this.enemyLuxmnRenderer.animate();
+    } else if (this.currentRenderer && this.currentRenderer.loaded) {
+      this.currentRenderer.animate();
 
       // this enemy draws itself, using its own this.position.
-      this.enemyLuxmnRenderer.draw(
+      this.currentRenderer.draw(
         this.ctx,
         this.position.x,
         this.position.y,
