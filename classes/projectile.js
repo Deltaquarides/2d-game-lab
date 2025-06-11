@@ -8,8 +8,6 @@ export class Projectile {
     facing = "right",
     spriteKey = "spit_right",
     collisionBlocks = [],
-    enemy,
-    player,
   }) {
     this.position = {
       x: x,
