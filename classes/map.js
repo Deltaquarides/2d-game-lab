@@ -101,7 +101,7 @@ export class Map {
         let coliVal = this.collisions[y][x]; // grab the value stored at position (x, y).
 
         if (coliVal === 1) {
-          //if calidVal === 1 create a new instance of CollisionsBox to create a box evreytime value of the collision array equal to 1.
+          //if calidVal === 1 create a new instance of CollisionsBox to create a box everytime value of the collision array equal to 1.
           this.collisionBlocks.push(
             new CollisionsBox({
               position: {
