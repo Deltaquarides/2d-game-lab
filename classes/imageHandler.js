@@ -13,7 +13,6 @@ export class ImageHandler {
     this.rows = rows;
     this.frameY = frameY; // ← second row (0-indexed)
     this.frameSpeed = frameSpeed; // Controls how fast the frames change (higher = slower)
-    this.loopOnce = loopOnce;
 
     this.frameX = 0;
     this.frameTimer = 0; // Keeps track of time for switching frames
