@@ -27,16 +27,6 @@ introLevel("Shy Hills Zone", "ACT 1");
 
 map.ready.then(() => {
   preloadSprites().then(() => {
-    player = new Player({
-      x: 400,
-      y: 100,
-      collisionBlocks: map.collisionBlocks,
-      mapBoundaries: map.mapBoundaries,
-      hearts,
-    });
-    eventListeners(player); // pass the object player to eventListeners as an argument so it can acces for ex player.velocity ect...
-    camera = new Camera({ ctx, player });
-
     //for each {x,y} in the array create a new instance of enemy, pass enemyPositions: pos, to the constructor.
     enemies = level1Enemies.map((pos) => {
       return new Enemy({
@@ -48,6 +38,22 @@ map.ready.then(() => {
         spriteType: pos.type || "enemyLuxmn",
       });
     });
+
+    player = new Player({
+      x: 0,
+      y: 100,
+      collisionBlocks: map.collisionBlocks,
+      mapBoundaries: map.mapBoundaries,
+      hearts,
+      enemies,
+    });
+
+    // Now that player exists, assign the player reference to enemies otherwise
+    //player inside Enemy class would be undefined
+    enemies.forEach((enemy) => (enemy.player = player));
+
+    eventListeners(player); // pass the object player to eventListeners as an argument so it can acces for ex player.velocity ect...
+    camera = new Camera({ ctx, player });
 
     for (let i = 0; i < heartCount; i++) {
       hearts.push(
@@ -76,7 +82,7 @@ function animate() {
 
     // Save transformation state
     ctx.save();
-    ctx.scale(2, 2); // Zoom in
+    ctx.scale(3, 3); // Zoom in
     //ctx.translate(0, 100); //if x coordinate change to a negative value camera system like effects
     camera.update();
     camera.applyTransform();
