@@ -4,7 +4,7 @@ export class Camera {
   constructor({ ctx, player }) {
     this.x = 0;
     this.y = 0;
-    this.scrollPostRight = 600;
+    this.scrollPostRight = 350;
     this.scrollPostTop = 100;
     this.scrollPostBottom = 210;
     this.ctx = ctx;
