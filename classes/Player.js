@@ -1,5 +1,7 @@
 //import { spriteConfigs } from "../utils/spriteConfigs.js";
 import { getSpriteHandler } from "../utils/preloadSprites.js";
+import { Projectile } from "./projectile.js";
+import { coolDown } from "../utils/global_utilities.js";
 
 let gravity = 0.5;
 
@@ -10,6 +12,7 @@ export class Player {
     collisionBlocks = [],
     mapBoundaries = null,
     hearts = null,
+    enemies = [],
   }) {
     this.playerIsDead = false;
     this.hearts = hearts;
@@ -46,6 +49,7 @@ export class Player {
 
     this.imgRenderer = getSpriteHandler("idle");
     this.deathRenderer = getSpriteHandler("playerDeathSprite");
+
     if (!this.imgRenderer) {
       console.log("Failed to load sprite handler for 'idle'");
     } // Render by default the first sprite as idle state.
@@ -55,6 +59,13 @@ export class Player {
 
     //will defined opcaticy of player when collide
     this.invinsible = false;
+
+    this.spits = []; //initialize an array to track all spit projectiles
+    this.canAttack = true;
+
+    this.enemies = enemies;
+
+    this.enemies ? console.log("this is the enemy:", this.enemies) : null;
   }
 
   //when player is hit change opacity
@@ -67,6 +78,60 @@ export class Player {
 
   setIsPlayerDead() {
     this.playerIsDead = true;
+  }
+
+  attack() {
+    //prevent player from attacking, if  canAttack is false it exits immediately the function
+    if (!this.canAttack) return; // <-- IMPORTANT: prevent attack during cooldown
+
+    //Ensures the spits array is safely initialized before use.
+    //  otherwise If this.spits were undefined, trying to call this.spits.push(...) would throw an error
+    if (!this.spits) this.spits = [];
+
+    let spriteKey = this.facing === "right" ? "spit_right" : "spit_left";
+
+    const spit = new Projectile({
+      x:
+        this.facing === "right"
+          ? this.hitbox.position.x
+          : this.hitbox.position.x,
+      y: this.hitbox.position.y, // vertically center the spit
+      speed: 5,
+      facing: this.facing,
+      spriteKey: spriteKey,
+      collisionBlocks: this.collisionBlocks,
+    });
+
+    spit.startLifetime();
+
+    this.spits.push(spit);
+
+    this.canAttack = false;
+    coolDown(this, "canAttack", true, 400);
+
+    //spit hit enemy
+    this.isHit = false;
+  }
+
+  //if spit touch enemies do something.
+  giveDamageToEnemy() {
+    this.spits.forEach((spit) => {
+      if (spit.isHit) return; // skip if already collided
+
+      this.enemies.forEach((enemy) => {
+        if (
+          spit.hitbox.position.x < enemy.hitbox.position.x + enemy.width &&
+          spit.hitbox.position.x + spit.width > enemy.hitbox.position.x &&
+          spit.hitbox.position.y < enemy.hitbox.position.y + enemy.height &&
+          spit.hitbox.position.y + spit.height > enemy.hitbox.position.y
+        ) {
+          enemy.lives -= 1;
+          spit.hasHit = true; // Mark the spit so it doesn't damage again
+
+          console.log(enemy.lives);
+        }
+      });
+    });
   }
 
   //now we need an update method to: change position using "velocity", applying gravity,
@@ -88,11 +153,21 @@ export class Player {
 
       //console.log("Player Y:", this.position.y, "Velocity Y:", this.velocity.y);
     }
+    this.giveDamageToEnemy();
     this.draw(ctx);
   }
 
   draw(ctx) {
     ctx.save();
+
+    // Remove expired projectiles
+    this.spits = this.spits.filter((spit) => !spit.markedForDeletion);
+
+    //draw spit attack
+    if (this.spits) {
+      this.spits.forEach((spit) => spit.draw(ctx));
+      this.spits.forEach((spit) => spit.update());
+    }
 
     const renderer = this.playerIsDead ? this.deathRenderer : this.imgRenderer;
     // Set transparency if invincible
@@ -111,9 +186,10 @@ export class Player {
       console.log("No valid sprite renderer available!");
     }
 
-    //hitbox
     ctx.strokeStyle = "red";
     ctx.strokeRect(this.position.x, this.position.y, this.width, this.height);
+
+    //hitbox
     ctx.fillStyle = "rgba(6, 27, 221, 0.5";
     ctx.strokeRect(
       this.hitbox.position.x,

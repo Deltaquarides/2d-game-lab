@@ -28,14 +28,15 @@ introLevel("Shy Hills Zone", "ACT 1");
 map.ready.then(() => {
   preloadSprites().then(() => {
     //for each {x,y} in the array create a new instance of enemy, pass enemyPositions: pos, to the constructor.
-    enemies = level1Enemies.map((pos) => {
+    enemies = level1Enemies.map((e) => {
       return new Enemy({
         ctx: ctx,
         collisionBlocks: map.collisionBlocks,
-        enemyPositions: pos,
+        enemyPositions: { x: e.x, y: e.y },
         player,
         hearts,
-        spriteType: pos.type || "enemyLuxmn",
+        spriteType: e.type || "enemyLuxmn",
+        lives: e.lives || 2,
       });
     });
 

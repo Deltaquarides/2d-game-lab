@@ -62,7 +62,7 @@ export const spriteConfigs = {
     },
     enemyExplode2: {
       src: "/images/Explosion.png",
-      totalCols: 6,
+      totalCols: 12,
       totalRows: 1,
       frameY: 0,
       loopOnce: true,
@@ -72,6 +72,20 @@ export const spriteConfigs = {
     enemyLuxmn: {
       src: "/images/enemyLuxmn.png",
       totalCols: 7,
+      totalRows: 1,
+      frameY: 0,
+    },
+  },
+  otile: {
+    right: {
+      src: "/images/Otile_right_sprite.png",
+      totalCols: 9,
+      totalRows: 1,
+      frameY: 0,
+    },
+    left: {
+      src: "/images/Otile_left_sprite.png",
+      totalCols: 9,
       totalRows: 1,
       frameY: 0,
     },
@@ -86,6 +100,46 @@ export const spriteConfigs = {
     right: {
       src: "/images/amazon/amazon_right.png",
       totalCols: 8,
+      totalRows: 1,
+      frameY: 0,
+    },
+  },
+  spit: {
+    spit_right: {
+      src: "/images/spit_right.png",
+      totalCols: 6,
+      totalRows: 1,
+      frameY: 0,
+    },
+    spit_left: {
+      src: "/images/spit_left.png",
+      totalCols: 6,
+      totalRows: 1,
+      frameY: 0,
+    },
+    spit_crash_right: {
+      src: "/images/spit_crash_right.png",
+      totalCols: 7,
+      totalRows: 1,
+      frameY: 0,
+    },
+    spit_crash_left: {
+      src: "/images/spit_crash_left.png",
+      totalCols: 7,
+      totalRows: 1,
+      frameY: 0,
+    },
+  },
+  fireBalls: {
+    fireball_left: {
+      src: "/images/fireball_left.png",
+      totalCols: 4,
+      totalRows: 1,
+      frameY: 0,
+    },
+    fireball_right: {
+      src: "/images/fireball_right.png",
+      totalCols: 4,
       totalRows: 1,
       frameY: 0,
     },
