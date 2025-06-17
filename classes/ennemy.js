@@ -1,5 +1,6 @@
 import { removeHeart } from "../utils/heartManager.js";
 import { coolDown, createSpriteRenderer } from "../utils/global_utilities.js";
+import { Projectile } from "./projectile.js";
 
 /*
     - defined enemy postions width and height
@@ -16,11 +17,12 @@ export class Enemy {
     player = null,
     hearts = null,
     spriteType,
+    lives,
   }) {
     //player class
     this.player = player;
     this.hearts = hearts; //same array shared  between the Enemy and the main game file, reference to 3 hearts
-
+    this.lives = lives;
     this.position = {
       x: enemyPositions.x,
       y: enemyPositions.y,
@@ -65,60 +67,116 @@ export class Enemy {
     this.spriteType = spriteType;
     console.log(this.spriteType);
 
-    this.spit = createSpriteRenderer("weapon", "spit");
+    //each exploding enemy has its own copy of the explosion animation.(cf.preloadSprites)
+    this.explosionRenderer = createSpriteRenderer("effects", "enemyExplode");
+    this.enemyExplode2 = createSpriteRenderer("effects", "enemyExplode2");
 
-    if (this.spriteType === "enemyLuxmn") {
+    switch (this.spriteType) {
       //each enemy  has his own copy of enemyLuxmn animation.(cf.preloadSprites)
-      this.currentRenderer = createSpriteRenderer("mignon", "enemyLuxmn");
+      case "enemyLuxmn":
+        this.currentRenderer = createSpriteRenderer("mignon", "enemyLuxmn");
+        break;
+      case "enemyAmazon":
+        // to avoid flickering: pre-instantiate left & right facing sprite. in amazonFacePlayer switch them.
+        this.amazonRendererLeft = createSpriteRenderer("enemyAmazon", "left");
+        this.amazonRendererRight = createSpriteRenderer("enemyAmazon", "right");
+        this.currentRenderer = this.amazonRendererRight; // default direction
+        break;
+      case "otile":
+        this.otileRendererLeft = createSpriteRenderer("otile", "left");
+        this.otileRendererRight = createSpriteRenderer("otile", "right");
     }
-    // to avoid flickering: pre-instantiate left & right facing sprite. in amazonFacePlayer switch them.
-    else if (this.spriteType === "enemyAmazon") {
-      this.amazonRendererLeft = createSpriteRenderer("enemyAmazon", "left");
-      this.amazonRendererRight = createSpriteRenderer("enemyAmazon", "right");
-      this.currentRenderer = this.amazonRendererRight; // default direction
-    } else if (this.spriteType === "otile") {
-      this.otileRendererLeft = createSpriteRenderer("otile", "left");
-      this.otileRendererRight = createSpriteRenderer("otile", "right");
-      this.enemyExplode2 = createSpriteRenderer("effects", "enemyExplode2");
-    }
+
+    this.fireBalls = [];
+    this.canAttack = true;
+    this.invisible = false;
   }
 
-  //always face the player, for now only amazon sprite can.
+  //always face the player, for now only amazon and otile sprite can.
   facePlayer() {
-    if (this.spriteType === "enemyAmazon" || this.spriteType === "otile") {
-      if (this.player.position.x + this.player.width <= this.position.x) {
+    if (this.spriteType === "enemyAmazon") {
+      this.currentRenderer =
+        this.player.position.x + this.player.width <= this.position.x
+          ? this.amazonRendererLeft
+          : this.amazonRendererRight;
+    } else if (this.spriteType === "otile") {
+      {
         this.currentRenderer =
-          this.amazonRendererLeft || this.otileRendererLeft;
-      } else if (this.player.position.x >= this.position.x + this.width) {
-        this.currentRenderer =
-          this.amazonRendererRight || this.otileRendererRight;
+          this.player.position.x + this.player.width <= this.position.x
+            ? this.otileRendererLeft
+            : this.otileRendererRight;
       }
     }
   }
 
-  update() {
-    this.updateHitbox();
-    this.applyGravity();
+  //when player is hit change opacity
+  setIsInvisible() {
+    this.invinsible = true;
+    setTimeout(() => {
+      this.invinsible = false;
+    }, 1000);
+  }
 
-    //in terms of performance and clarity, checking !this.activated is better avoiding
-    if (!this.activated && this.isPlayerNearby()) {
-      this.activated = true;
+  //attack of enemy, here otile will use fireball
+  attackFireball() {
+    if (!this.canAttack) return;
+    if (!this.fireBalls) this.fireBalls = [];
+
+    const facing =
+      this.player.position.x + this.player.width <= this.position.x
+        ? "left"
+        : "right";
+
+    let spriteKey;
+    if (facing === "left") {
+      spriteKey = "fireball_right";
+    } else {
+      spriteKey = "fireball_left";
     }
 
-    if (
-      this.activated &&
-      !this.isDead /*&& this.spriteType !== "enemyAmazon"*/
-    ) {
-      this.patrol();
-      this.checkHorizontalCollisions();
-    }
+    console.log(spriteKey, "facing:", facing);
+    const fireBall = new Projectile({
+      x: this.hitbox.position.x,
+      y: this.hitbox.position.y, // vertically center the spit
+      speed: 2,
+      facing: facing,
+      spriteKey: spriteKey,
+      collisionBlocks: this.collisionBlocks,
+    });
 
-    this.checkOnGround();
+    fireBall.startLifetime(2000);
 
-    this.checkPlayerCollision(this.player, this); // this refer to the current enemy instance itself
-    this.facePlayer();
+    this.fireBalls.push(fireBall);
 
-    this.draw();
+    this.canAttack = false;
+    coolDown(this, "canAttack", true, 500);
+  }
+
+  giveDamageToPlayer() {
+    this.fireBalls.forEach((fireBall) => {
+      const fireCollidesWithPlayer =
+        fireBall.hitbox.position.x <
+          this.player.hitbox.position.x + this.player.hitbox.width &&
+        fireBall.hitbox.position.x + fireBall.hitbox.width >
+          this.player.hitbox.position.x &&
+        fireBall.hitbox.position.y <
+          this.player.hitbox.position.y + this.player.hitbox.height &&
+        fireBall.hitbox.position.y + fireBall.hitbox.height >
+          this.player.hitbox.position.y;
+
+      if (fireCollidesWithPlayer) {
+        console.log("Player hit by fireball!");
+        this.player.setIsInvisible(); // player opacity change when hit
+        removeHeart(this.hearts); // remove 1 heart only
+        coolDown(this, "canAttack", true, 500); // get damage again after cooldown
+      } else if (this.hearts.length === 0) {
+        this.player.setIsPlayerDead(); // player's dead sprite
+        setTimeout(() => {
+          // game over after 1000ms
+          this.GameOverElement();
+        }, 1000);
+      }
+    });
   }
 
   updateHitbox() {
@@ -196,7 +254,6 @@ export class Enemy {
         this.direction < 0 &&
         hitboxLeft - this.speed < blockRight &&
         hitboxRight > blockRight;
-
       if (isVerticallyAligned && (isCollidingRight || isCollidingLeft)) {
         // Reverse direction if a horizontal collision happens
         this.direction *= -1;
@@ -210,6 +267,7 @@ export class Enemy {
     const distance = Math.abs(this.position.x - playerX); //Math.abs returns the absolute value of a number. here we want the number to stay positif
     return distance <= this.detectionRange;
   }
+
   patrol() {
     if (!this.isOnGround) return;
     //Move left or right
@@ -225,10 +283,11 @@ export class Enemy {
       this.direction *= -1;
   }
 
+  //obejct1; player, object2:enemy
   checkPlayerCollision(object1, object2) {
     //1.check if both object exist
     if (!object1) return console.log("player not updated");
-    if (!object2) return console.log("Block not updated");
+    if (!object2) return console.log("enemy not updated");
 
     //  Skip any further collision checks if the enemy is already dead
     if (this.isDead) return;
@@ -260,10 +319,6 @@ export class Enemy {
       console.log("player hit from top");
       object1.velocity.y = -5;
 
-      //each exploding enemy has its own copy of the explosion animation.(cf.preloadSprites)
-
-      this.explosionRenderer = createSpriteRenderer("effects", "enemyExplode");
-
       this.isDead = true;
       return; //exit the checkPlayerCollision() method early after successfully detecting a top-down hit on the enemy.
     } else {
@@ -279,55 +334,59 @@ export class Enemy {
         this.player.setIsPlayerDead();
 
         setTimeout(() => {
-          GameOverElement();
+          this.GameOverElement();
         }, 1000);
-
-        function GameOverElement() {
-          const titleElement = document.getElementById("titleOver");
-          if (titleElement) {
-            //run after the DOM is ready otherwise null reference
-
-            titleElement.innerText = "GAME OVER";
-            titleElement.classList.add("gameOver");
-          }
-        }
       }
     }
   }
 
-  draw() {
-    if (this.enemyExplode2 && this.enemyExplode2.loaded) {
-      //this.enemyExplode2
-      this.enemyExplode2.animate();
-      this.enemyExplode2.draw(this.ctx, 100, 100, 64, 64);
+  GameOverElement() {
+    const titleElement = document.getElementById("titleOver");
+    if (titleElement) {
+      //run after the DOM is ready otherwise null reference
+
+      titleElement.innerText = "GAME OVER";
+      titleElement.classList.add("gameOver");
     }
+  }
 
-    this.spit.animate();
-    this.spit.draw(this.ctx, 200, 100, 32, 32);
+  drawfireBAll() {
+    // Remove expired fireBalls
+    this.fireBalls = this.fireBalls.filter(
+      (fireBall) => !fireBall.markedForDeletion
+    );
 
-    // If enemy has been hit from top, show explosion
-    if (
-      this.isDead &&
-      this.explosionRenderer &&
-      this.explosionRenderer.loaded
-    ) {
-      this.explosionRenderer.animate(); // Play explosion animation from imgHandler method
+    //draw spit attack
+    if (this.fireBalls) {
+      this.fireBalls.forEach((fireBall) => fireBall.draw(this.ctx));
+      this.fireBalls.forEach((fireBall) => fireBall.update());
+    }
+  }
 
-      this.explosionRenderer.draw(
-        //draw method from imgHandler
-        this.ctx,
-        this.position.x,
-        this.position.y + 35,
-        35,
-        35
-      );
+  drawDebug() {
+    //debug hitbox
+    this.ctx.strokeStyle = "red";
+    this.ctx.strokeRect(
+      this.hitbox.position.x,
+      this.hitbox.position.y,
+      this.hitbox.width,
+      this.hitbox.height
+    );
 
-      //is we are the end of the sprite loop markForDeletion is true
-      if (this.explosionRenderer.frameX === this.explosionRenderer.cols - 1) {
-        this.markedForDeletion = true;
-      }
-    } else if (this.currentRenderer && this.currentRenderer.loaded) {
+    //debug
+    this.ctx.strokeStyle = "blue";
+    this.ctx.strokeRect(
+      this.position.x,
+      this.position.y,
+      this.width,
+      this.height
+    );
+  }
+
+  drawEnemy() {
+    if (this.currentRenderer && this.currentRenderer.loaded) {
       this.currentRenderer.animate();
+      this.ctx.globalAlpha = this.invinsible && this.isDead === false ? 0.5 : 1;
 
       // this enemy draws itself, using its own this.position.
       this.currentRenderer.draw(
@@ -337,24 +396,71 @@ export class Enemy {
         this.width,
         this.height
       );
-      //debug hitbox
-      this.ctx.strokeStyle = "red";
-      this.ctx.strokeRect(
-        this.hitbox.position.x,
-        this.hitbox.position.y,
-        this.hitbox.width,
-        this.hitbox.height
+    }
+  }
+
+  drawExplosion() {
+    const otile = this.spriteType === "otile";
+    const explosion = otile ? this.enemyExplode2 : this.explosionRenderer;
+    const offset = otile ? 0 : 35;
+    const widthExplosion = otile ? 64 : 32;
+
+    if (explosion && explosion.loaded) {
+      explosion.animate();
+      explosion.draw(
+        //draw method from imgHandler
+        this.ctx,
+        this.position.x,
+        this.position.y + offset,
+        widthExplosion,
+        widthExplosion
       );
 
-      //debug
-      this.ctx.strokeStyle = "blue";
-      this.ctx.strokeRect(
-        this.position.x,
-        this.position.y,
-        this.width,
-        this.height
-      );
+      //is we are the end of the sprite loop markForDeletion is true
+      // explosion won't freeze at the last frame.
+      if (explosion.frameX === explosion.cols - 1) {
+        this.markedForDeletion = true;
+      }
     }
+  }
+
+  draw() {
+    if (this.isDead) {
+      // If enemy has been hit from top(dead), show explosion
+      this.drawExplosion();
+    } else {
+      this.drawEnemy();
+      this.drawDebug();
+    }
+    this.drawfireBAll();
+  }
+  update() {
+    this.updateHitbox();
+    this.applyGravity();
+
+    //in terms of performance and clarity, checking !this.activated is better avoiding
+    if (!this.activated && this.isPlayerNearby()) {
+      this.activated = true;
+    }
+
+    if (
+      this.activated &&
+      !this.isDead /*&& this.spriteType !== "enemyAmazon"*/
+    ) {
+      this.patrol();
+
+      this.checkHorizontalCollisions();
+      if (this.spriteType === "otile" && !this.player.playerIsDead) {
+        this.attackFireball();
+      }
+    }
+
+    this.checkOnGround();
+
+    this.checkPlayerCollision(this.player, this); // this refer to the current enemy instance itself
+    this.facePlayer();
+    this.giveDamageToPlayer();
+    this.draw();
   }
 }
 

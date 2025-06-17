@@ -64,8 +64,6 @@ export class Player {
     this.canAttack = true;
 
     this.enemies = enemies;
-
-    this.enemies ? console.log("this is the enemy:", this.enemies) : null;
   }
 
   //when player is hit change opacity
@@ -93,16 +91,14 @@ export class Player {
     const spit = new Projectile({
       x:
         this.facing === "right"
-          ? this.hitbox.position.x
-          : this.hitbox.position.x,
+          ? this.hitbox.position.x + 16
+          : this.hitbox.position.x - 25,
       y: this.hitbox.position.y, // vertically center the spit
       speed: 5,
       facing: this.facing,
       spriteKey: spriteKey,
       collisionBlocks: this.collisionBlocks,
     });
-
-    spit.startLifetime();
 
     this.spits.push(spit);
 
@@ -125,13 +121,36 @@ export class Player {
           spit.hitbox.position.y < enemy.hitbox.position.y + enemy.height &&
           spit.hitbox.position.y + spit.height > enemy.hitbox.position.y
         ) {
-          enemy.lives -= 1;
-          spit.hasHit = true; // Mark the spit so it doesn't damage again
+          //avoid damage being undefined
+          if (!enemy || !enemy.spriteType || typeof enemy.lives !== "number")
+            return;
 
+          let damage;
+          switch (enemy.spriteType) {
+            case "enemyLuxmn":
+              damage = 1;
+              break;
+            case "enemyAmazon":
+              damage = 1;
+              break;
+            case "otile":
+              damage = 2;
+              break;
+          }
+          enemy.lives -= damage;
+          enemy.setIsInvisible();
+          spit.speed = 0;
+          spit.isHit = true; // Mark the spit so it doesn't damage again
           console.log(enemy.lives);
+
+          // Remove enemy if no lives
+          if (enemy.lives <= 0) {
+            enemy.isDead = true;
+          }
         }
       });
     });
+    // this.enemies = this.enemies.filter((enemy) => enemy.lives > 0);
   }
 
   //now we need an update method to: change position using "velocity", applying gravity,
@@ -165,8 +184,10 @@ export class Player {
 
     //draw spit attack
     if (this.spits) {
-      this.spits.forEach((spit) => spit.draw(ctx));
-      this.spits.forEach((spit) => spit.update());
+      this.spits.forEach((spit) => {
+        spit.draw(ctx);
+        spit.update(ctx);
+      });
     }
 
     const renderer = this.playerIsDead ? this.deathRenderer : this.imgRenderer;

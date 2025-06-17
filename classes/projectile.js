@@ -32,13 +32,20 @@ export class Projectile {
 
     this.markedForDeletion = false;
     this.facing = facing;
+
+    this.startLifetime(800); // default auto-destroy if nothing happens
   }
 
   //by default after 600ms projectile disapear
   startLifetime(duration = 800) {
-    setTimeout(() => {
+    this._lifeTimer = setTimeout(() => {
       this.markedForDeletion = true;
     }, duration);
+  }
+
+  markForDeletion(delay = 300) {
+    if (this._lifeTimer) clearTimeout(this._lifeTimer);
+    setTimeout(() => (this.markedForDeletion = true), delay);
   }
 
   checkCollisions() {
@@ -49,13 +56,17 @@ export class Projectile {
         this.hitbox.position.y < block.position.y + block.height &&
         this.hitbox.position.y + this.hitbox.height > block.position.y
       ) {
-        // this.markedForDeletion = true;
-        console.log("touch down");
-        this.speed = 0;
+        if (!this.markedForDeletion) {
+          // this.markedForDeletion = true;
+          console.log("touch down");
+          this.speed = 0;
 
-        const crashKey =
-          this.facing === "right" ? "spit_crash_right" : "spit_crash_left";
-        this.renderer = getSpriteHandler(crashKey);
+          const crashKey =
+            this.facing === "right" ? "spit_crash_right" : "spit_crash_left";
+          this.renderer = getSpriteHandler(crashKey);
+
+          this.markForDeletion(300);
+        }
       }
     }
   }
@@ -72,6 +83,8 @@ export class Projectile {
   }
 
   update() {
+    if (this.markedForDeletion) return;
+
     this.position.x += this.speed;
     this.updateHitbox();
     if (this.renderer) this.renderer.animate();
@@ -80,7 +93,6 @@ export class Projectile {
 
   draw(ctx) {
     ctx.save();
-    ctx.strokeStyle = "red";
     ctx.strokeRect(this.position.x, this.position.y, this.width, this.height);
 
     ctx.strokeRect(
