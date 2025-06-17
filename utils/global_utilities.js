@@ -8,9 +8,7 @@ import { ImageHandler } from "../classes/imageHandler.js";
 export const coolDown = (object, property, valueAfterCooldown, duration) => {
   setTimeout(() => {
     object[property] = valueAfterCooldown;
-    console.log(object[property]);
   }, duration);
-  console.log(object[property]);
 };
 
 // **** for entrance level map add text and animation ****

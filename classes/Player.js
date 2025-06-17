@@ -103,7 +103,7 @@ export class Player {
     this.spits.push(spit);
 
     this.canAttack = false;
-    coolDown(this, "canAttack", true, 400);
+    coolDown(this, "canAttack", true, 600);
 
     //spit hit enemy
     this.isHit = false;
@@ -115,11 +115,16 @@ export class Player {
       if (spit.isHit) return; // skip if already collided
 
       this.enemies.forEach((enemy) => {
+        if (enemy.isDead) return; // skip if already dead
+
         if (
-          spit.hitbox.position.x < enemy.hitbox.position.x + enemy.width &&
-          spit.hitbox.position.x + spit.width > enemy.hitbox.position.x &&
-          spit.hitbox.position.y < enemy.hitbox.position.y + enemy.height &&
-          spit.hitbox.position.y + spit.height > enemy.hitbox.position.y
+          spit.hitbox.position.x <
+            enemy.hitbox.position.x + enemy.hitbox.width &&
+          spit.hitbox.position.x + spit.hitbox.width >
+            enemy.hitbox.position.x &&
+          spit.hitbox.position.y <
+            enemy.hitbox.position.y + enemy.hitbox.height &&
+          spit.hitbox.position.y + spit.hitbox.height > enemy.hitbox.position.y
         ) {
           //avoid damage being undefined
           if (!enemy || !enemy.spriteType || typeof enemy.lives !== "number")
@@ -150,7 +155,7 @@ export class Player {
         }
       });
     });
-    // this.enemies = this.enemies.filter((enemy) => enemy.lives > 0);
+    this.enemies = this.enemies.filter((enemy) => !enemy.isDead);
   }
 
   //now we need an update method to: change position using "velocity", applying gravity,

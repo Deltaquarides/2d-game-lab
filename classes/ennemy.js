@@ -294,10 +294,12 @@ export class Enemy {
 
     //2. Check for AABB collision, are we colliding with the ennemy,
     const isColliding =
-      object1.hitbox.position.x < object2.hitbox.position.x + object2.width &&
+      object1.hitbox.position.x <
+        object2.hitbox.position.x + object2.hitbox.width &&
       object1.hitbox.position.x + object1.hitbox.width >
         object2.hitbox.position.x &&
-      object1.hitbox.position.y < object2.hitbox.position.y + object2.height &&
+      object1.hitbox.position.y <
+        object2.hitbox.position.y + object2.hitbox.height &&
       object1.hitbox.position.y + object1.hitbox.height >
         object2.hitbox.position.y;
 
@@ -309,7 +311,7 @@ export class Enemy {
     // -if player collide left right or bottom player transparent and takes damages
     // Determine if player is hitting from the top
     const playerBottom = object1.hitbox.position.y + object1.hitbox.height;
-    const enemyMidY = object2.hitbox.position.y + object2.height / 2;
+    const enemyMidY = object2.hitbox.position.y + object2.hitbox.height / 2;
 
     const isTopHit =
       object1.velocity.y > 0 && // player must be falling
