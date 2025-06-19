@@ -58,20 +58,10 @@ export function preloadSprites() {
   return Promise.all(promises); // Return one promise that waits for ALL images to load
 }
 
-let previousHandler = null;
-
 //getter function to access
 export function getSpriteHandler(name) {
   const handler = loadedSprites[name];
-  if (!handler) {
-    console.log(`sprite not loaded ${name}`);
-  }
-  if (handler !== previousHandler) {
-    console.log(`Returning new handler instance for ${name}`, handler);
-    previousHandler = handler;
-  } else {
-    console.log(`Reusing handler instance for ${name}`, handler);
-  }
+
   return handler;
 }
 
