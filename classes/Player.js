@@ -11,11 +11,9 @@ export class Player {
     y,
     collisionBlocks = [],
     mapBoundaries = null,
-    hearts = null,
     enemies = [],
   }) {
     this.playerIsDead = false;
-    this.hearts = hearts;
 
     this.position = {
       x: x,

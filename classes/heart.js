@@ -31,21 +31,21 @@ export class Heart {
   // this.markedForDeletion = true;
   //}
 
-  update(ctx) {
+  drawUI(ctx, offsetX = 0) {
     if (!this.ready) return;
     // if (!this.markedForDeletion) {
-    this.draw(ctx);
+    this.draw(ctx, offsetX);
     //}
   }
 
-  draw(ctx) {
+  draw(ctx, offsetX) {
     ctx.drawImage(
       this.image,
       this.cropBox.x,
       this.cropBox.y,
       this.cropBox.width,
       this.cropBox.height,
-      this.position.x,
+      this.position.x + offsetX,
       this.position.y,
 
       this.width,

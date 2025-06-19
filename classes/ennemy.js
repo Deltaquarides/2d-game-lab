@@ -13,6 +13,7 @@ export class Enemy {
   constructor({
     ctx,
     collisionBlocks = [],
+    mapBoundaries = null,
     enemyPositions = { x: 0, y: 0 },
     player = null,
     hearts = null,
@@ -60,6 +61,8 @@ export class Enemy {
 
     this.isOnGround = false; // ← track grounded state
     this.collisionBlocks = collisionBlocks;
+    this.mapBoundaries = mapBoundaries;
+
     this.ctx = ctx;
 
     this.hasRecentlyHitPlayer = false;
@@ -165,6 +168,7 @@ export class Enemy {
           this.player.hitbox.position.y;
 
       if (fireCollidesWithPlayer) {
+        console.log("Player is hit MAN!!!!");
         console.log("Player hit by fireball!");
         this.player.setIsInvisible(); // player opacity change when hit
         removeHeart(this.hearts); // remove 1 heart only
@@ -229,7 +233,7 @@ export class Enemy {
     this.isOnGround = landed;
   }
 
-  //collisions between enemy and blocks horizontally
+  //collisions between enemy and blocks horizontally, if collisions change direction.
   checkHorizontalCollisions() {
     for (const block of this.collisionBlocks) {
       const blockTop = block.position.y;
@@ -259,6 +263,22 @@ export class Enemy {
         this.direction *= -1;
         break;
       }
+    }
+  }
+
+  //check collisions between  enemy position map with edge. if collisions change direction.
+  checkMapEdgeCollisions() {
+    if (!this.mapBoundaries) return;
+
+    const isLeftBoundtHit =
+      this.direction < 0 &&
+      this.hitbox.position.x - this.speed < this.mapBoundaries.leftEdge;
+    const isRightBoundtHit =
+      this.direction > 0 &&
+      this.hitbox.position.x + this.hitbox.width + this.speed >
+        this.mapBoundaries.rightEdge;
+    if (isLeftBoundtHit || isRightBoundtHit) {
+      this.direction *= -1;
     }
   }
 
@@ -323,22 +343,20 @@ export class Enemy {
 
       this.isDead = true;
       return; //exit the checkPlayerCollision() method early after successfully detecting a top-down hit on the enemy.
-    } else {
-      if (!this.hasRecentlyHitPlayer) {
-        this.hasRecentlyHitPlayer = true;
+    } else if (!this.hasRecentlyHitPlayer) {
+      this.hasRecentlyHitPlayer = true;
 
-        this.player.setIsInvisible(); //change opacity when hit
+      this.player.setIsInvisible(); //change opacity when hit
 
-        removeHeart(this.hearts); // remove 1 heart only
+      removeHeart(this.hearts); // remove 1 heart only
 
-        coolDown(this, "hasRecentlyHitPlayer", false, 1000);
-      } else if (this.hearts.length === 0) {
-        this.player.setIsPlayerDead();
+      coolDown(this, "hasRecentlyHitPlayer", false, 1000);
+    } else if (this.hearts.length === 0) {
+      this.player.setIsPlayerDead();
 
-        setTimeout(() => {
-          this.GameOverElement();
-        }, 1000);
-      }
+      setTimeout(() => {
+        this.GameOverElement();
+      }, 1000);
     }
   }
 
@@ -462,6 +480,7 @@ export class Enemy {
     this.checkPlayerCollision(this.player, this); // this refer to the current enemy instance itself
     this.facePlayer();
     this.giveDamageToPlayer();
+    this.checkMapEdgeCollisions();
     this.draw();
   }
 }
