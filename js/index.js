@@ -25,6 +25,31 @@ const heartCount = 5;
 
 introLevel("Shy Hills Zone", "ACT 1");
 
+//create hearts
+function createHearts() {
+  for (let i = 0; i < heartCount; i++) {
+    hearts.push(
+      new Heart({
+        x: 15 + i * 20,
+        y: 10,
+        width: 16,
+        height: 16,
+        imageSrc: "../images/hearts.png",
+      })
+    );
+  }
+}
+
+//draw Hearts outside of camera
+function drawUi() {
+  hearts.forEach((heart) => {
+    const offsetX = camera.x; // moves UI hearts with the camera, canvas is shifs the drawing context (semms like it's moving) not the hearts
+    heart.drawUI(ctx, offsetX);
+  });
+
+  console.log("Drawing heart at:", hearts[0].position.x, hearts[0].position.y);
+}
+
 map.ready.then(() => {
   preloadSprites().then(() => {
     //for each {x,y} in the array create a new instance of enemy, pass enemyPositions: pos, to the constructor.
@@ -32,6 +57,7 @@ map.ready.then(() => {
       return new Enemy({
         ctx: ctx,
         collisionBlocks: map.collisionBlocks,
+        mapBoundaries: map.mapBoundaries,
         enemyPositions: { x: e.x, y: e.y },
         player,
         hearts,
@@ -45,7 +71,6 @@ map.ready.then(() => {
       y: 100,
       collisionBlocks: map.collisionBlocks,
       mapBoundaries: map.mapBoundaries,
-      hearts,
       enemies,
     });
 
@@ -56,18 +81,7 @@ map.ready.then(() => {
     eventListeners(player); // pass the object player to eventListeners as an argument so it can acces for ex player.velocity ect...
     camera = new Camera({ ctx, player });
 
-    for (let i = 0; i < heartCount; i++) {
-      hearts.push(
-        new Heart({
-          x: 15 + i * 20,
-          y: 10,
-          width: 16,
-          height: 16,
-          imageSrc: "../images/hearts.png",
-        })
-      );
-    }
-    animate();
+    createHearts();
   });
 });
 
@@ -98,21 +112,17 @@ function animate() {
     //  Remove dead enemies after explosion animation is done
     enemies = enemies.filter((enemy) => !enemy.markedForDeletion);
 
-    // Remove Hearts
-    //hearts = hearts.filter((heart) => !heart.markedForDeletion);
-    hearts.forEach((heart) => heart.update(ctx));
-
     // Draw collision boxes (for debugging)
     map.collisionBlocks.forEach((block) => block.draw(ctx));
     if (camera) {
       camera.drawDebug();
     }
-
+    drawUi();
     ctx.restore(); // Restore default canvas state (no scale, no translate)
 
-    //player.update(ctx, canvas); // Update position + draw new frame
     requestAnimationFrame(animate); // Loop again
   } catch (err) {
     console.error("Animation error:", err); // This will tell where it crashes
   }
 }
+animate();

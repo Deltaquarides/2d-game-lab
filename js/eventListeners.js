@@ -17,8 +17,6 @@ function eventListeners(player) {
 const keyPressed = new Set();
 
 window.addEventListener("keydown", ({ code }) => {
-  console.log("Key Pressed:", code);
-
   if (!currentPlayer) return;
   keyPressed.add(code);
 
