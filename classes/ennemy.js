@@ -22,7 +22,7 @@ export class Enemy {
   }) {
     //player class
     this.player = player;
-    this.hearts = hearts; //same array shared  between the Enemy and the main game file, reference to 3 hearts
+    this.hearts = hearts; //same array shared  between the Enemy and the main game file, reference to 3 hearts, prevent double-damage from the same fireball
     this.lives = lives;
     this.position = {
       x: enemyPositions.x,
@@ -68,7 +68,6 @@ export class Enemy {
     this.hasRecentlyHitPlayer = false;
 
     this.spriteType = spriteType;
-    console.log(this.spriteType);
 
     //each exploding enemy has its own copy of the explosion animation.(cf.preloadSprites)
     this.explosionRenderer = createSpriteRenderer("effects", "enemyExplode");
@@ -93,22 +92,29 @@ export class Enemy {
     this.fireBalls = [];
     this.canAttack = true;
     this.invisible = false;
+    this.hasHitPlayer = false; //if player is hit by fireBall flag
   }
 
   //always face the player, for now only amazon and otile sprite can.
   facePlayer() {
-    if (this.spriteType === "enemyAmazon") {
-      this.currentRenderer =
-        this.player.position.x + this.player.width <= this.position.x
-          ? this.amazonRendererLeft
-          : this.amazonRendererRight;
-    } else if (this.spriteType === "otile") {
-      {
-        this.currentRenderer =
-          this.player.position.x + this.player.width <= this.position.x
-            ? this.otileRendererLeft
-            : this.otileRendererRight;
-      }
+    const isPlayerOnLeft =
+      this.player.position.x + this.player.width <= this.position.x;
+
+    const renderers = {
+      enemyAmazon: {
+        left: this.amazonRendererLeft,
+        right: this.amazonRendererRight,
+      },
+      otile: {
+        left: this.otileRendererLeft,
+        right: this.otileRendererRight,
+      },
+    };
+
+    if (renderers[this.spriteType]) {
+      this.currentRenderer = isPlayerOnLeft
+        ? renderers[this.spriteType].left
+        : renderers[this.spriteType].right;
     }
   }
 
@@ -137,7 +143,6 @@ export class Enemy {
       spriteKey = "fireball_left";
     }
 
-    console.log(spriteKey, "facing:", facing);
     const fireBall = new Projectile({
       x: this.hitbox.position.x,
       y: this.hitbox.position.y, // vertically center the spit
@@ -167,10 +172,9 @@ export class Enemy {
         fireBall.hitbox.position.y + fireBall.hitbox.height >
           this.player.hitbox.position.y;
 
-      if (fireCollidesWithPlayer) {
-        console.log("Player is hit MAN!!!!");
-        console.log("Player hit by fireball!");
+      if (fireCollidesWithPlayer && !this.hasHitPlayer) {
         this.player.setIsInvisible(); // player opacity change when hit
+        this.hasHitPlayer = true;
         removeHeart(this.hearts); // remove 1 heart only
         coolDown(this, "canAttack", true, 500); // get damage again after cooldown
       } else if (this.hearts.length === 0) {
@@ -337,8 +341,8 @@ export class Enemy {
       object1.velocity.y > 0 && // player must be falling
       playerBottom <= enemyMidY; // player is above midpoint of enemy
 
+    //player hit enemy from top
     if (isTopHit) {
-      console.log("player hit from top");
       object1.velocity.y = -5;
 
       this.isDead = true;
@@ -478,7 +482,11 @@ export class Enemy {
     this.checkOnGround();
 
     this.checkPlayerCollision(this.player, this); // this refer to the current enemy instance itself
-    this.facePlayer();
+
+    if (this.spriteType === "enemyAmazon" || this.spriteType === "otile") {
+      this.facePlayer();
+    }
+
     this.giveDamageToPlayer();
     this.checkMapEdgeCollisions();
     this.draw();
