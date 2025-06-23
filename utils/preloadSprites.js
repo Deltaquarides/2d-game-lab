@@ -41,7 +41,7 @@ export function preloadSprites() {
       });
       loadedSprites[spriteKey] = handler;
 
-      console.log("laodedSprite", loadedSprites);
+      //console.log("laodedSprite", loadedSprites);
       const waitUntilLoaded = new Promise((resolve) => {
         const checkLoaded = () => {
           if (handler.loaded) {

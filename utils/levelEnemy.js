@@ -14,7 +14,7 @@ export const level1Enemies = [
   { x: 1090, y: 80, type: "otile", lives: 6 },
   { x: 1150, y: 80, lives: 2 },
   { x: 1200, y: 80, lives: 2 },
-  { x: 1450, y: 80, type: "enemyAmazon", lives: 4 },
+  { x: 1450, y: 80, type: "enemyAmazon", lives: 8 },
 ];
 
 export const level2Enemies = [

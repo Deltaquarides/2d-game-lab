@@ -8,6 +8,7 @@ export class Projectile {
     facing = "right",
     spriteKey = "spit_right",
     collisionBlocks = [],
+    mapBoundaries = null,
   }) {
     this.position = {
       x: x,
@@ -35,6 +36,8 @@ export class Projectile {
 
     this.startLifetime(); // default auto-destroy if nothing happens
     console.log("Created new projectile with renderer ID:", this.renderer);
+
+    this.mapBoundaries = mapBoundaries;
   }
 
   //by default after 600ms projectile disapear
@@ -49,7 +52,7 @@ export class Projectile {
     setTimeout(() => (this.markedForDeletion = true), delay);
   }
 
-  checkCollisions() {
+  checkCollisionsBloc() {
     for (let block of this.collisionBlocks) {
       if (
         this.hitbox.position.x < block.position.x + block.width &&
@@ -68,6 +71,25 @@ export class Projectile {
         }
       }
     }
+  }
+
+  //collision of projectile to boundaries of map
+  checkCollisionsBoundaries() {
+    if (!this.mapBoundaries) return;
+
+    const collisionLeft = this.hitbox.position.x < this.mapBoundaries.leftEdge;
+    const collisionRight =
+      this.hitbox.position.x + this.hitbox.width > this.mapBoundaries.rightEdge;
+
+    if (collisionLeft || collisionRight) {
+      const crashKey =
+        this.facing === "right" ? "spit_crash_right" : "spit_crash_left";
+      this.renderer = getSpriteHandler(crashKey);
+      this.speed = 0;
+
+      console.log("RUN MAN RUN!!!!!");
+    }
+    console.log(this.mapBoundaries.rightEdge);
   }
 
   //player give damages to enemy:
@@ -89,7 +111,8 @@ export class Projectile {
     this.position.x += this.speed;
     this.updateHitbox();
     if (this.renderer) this.renderer.animate();
-    this.checkCollisions();
+    this.checkCollisionsBloc();
+    this.checkCollisionsBoundaries();
   }
 
   draw(ctx) {

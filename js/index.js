@@ -46,8 +46,6 @@ function drawUi() {
     const offsetX = camera.x; // moves UI hearts with the camera, canvas is shifs the drawing context (semms like it's moving) not the hearts
     heart.drawUI(ctx, offsetX);
   });
-
-  console.log("Drawing heart at:", hearts[0].position.x, hearts[0].position.y);
 }
 
 map.ready.then(() => {
@@ -57,6 +55,7 @@ map.ready.then(() => {
       return new Enemy({
         ctx: ctx,
         collisionBlocks: map.collisionBlocks,
+        collisionPlatforms: map.collisionPlatforms,
         mapBoundaries: map.mapBoundaries,
         enemyPositions: { x: e.x, y: e.y },
         player,
@@ -70,6 +69,7 @@ map.ready.then(() => {
       x: 0,
       y: 100,
       collisionBlocks: map.collisionBlocks,
+      collisionPlatforms: map.collisionPlatforms,
       mapBoundaries: map.mapBoundaries,
       enemies,
     });
@@ -97,7 +97,7 @@ function animate() {
 
     // Save transformation state
     ctx.save();
-    ctx.scale(3, 3); // Zoom in
+    ctx.scale(4, 4); // Zoom in
     //ctx.translate(0, 100); //if x coordinate change to a negative value camera system like effects
     camera.update();
     camera.applyTransform();
@@ -114,9 +114,7 @@ function animate() {
 
     // Draw collision boxes (for debugging)
     map.collisionBlocks.forEach((block) => block.draw(ctx));
-    if (camera) {
-      camera.drawDebug();
-    }
+
     drawUi();
     ctx.restore(); // Restore default canvas state (no scale, no translate)
 

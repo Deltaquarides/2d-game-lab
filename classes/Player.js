@@ -10,6 +10,7 @@ export class Player {
     x,
     y,
     collisionBlocks = [],
+    collisionPlatforms = [],
     mapBoundaries = null,
     enemies = [],
   }) {
@@ -51,9 +52,10 @@ export class Player {
     if (!this.imgRenderer) {
       console.log("Failed to load sprite handler for 'idle'");
     } // Render by default the first sprite as idle state.
+
     this.collisionBlocks = collisionBlocks; // from colllisionsBlock class Map
+    this.collisionPlatforms = collisionPlatforms;
     this.mapBoundaries = mapBoundaries;
-    //console.log("Map boundaries received by Player:", this.mapBoundaries);
 
     //will defined opcaticy of player when collide
     this.invinsible = false;
@@ -96,6 +98,7 @@ export class Player {
       facing: this.facing,
       spriteKey: spriteKey,
       collisionBlocks: this.collisionBlocks,
+      mapBoundaries: this.mapBoundaries,
     });
 
     this.spits.push(spit);
@@ -156,9 +159,23 @@ export class Player {
     this.enemies = this.enemies.filter((enemy) => !enemy.isDead);
   }
 
+  drawDebugBlocs(ctx) {
+    this.collisionBlocks.forEach((bloc) => {
+      bloc.draw(ctx);
+    });
+  }
+
+  drawDebugPlatforms(ctx) {
+    this.collisionPlatforms.forEach((platform) => {
+      platform.draw(ctx);
+    });
+  }
   //now we need an update method to: change position using "velocity", applying gravity,
   //check collisions draws the player in the new position
   update(ctx) {
+    this.drawDebugBlocs(ctx);
+    this.drawDebugPlatforms(ctx);
+
     if (!this.playerIsDead) {
       this.updateHitbox(); //Any time you change position.x or position.y, call updateHitbox()
       //console.log("position y:", this.position.x, "position x:", this.position.y);
@@ -179,9 +196,7 @@ export class Player {
     this.draw(ctx);
   }
 
-  draw(ctx) {
-    ctx.save();
-
+  handleSpit(ctx) {
     // Remove expired projectiles
     this.spits = this.spits.filter((spit) => !spit.markedForDeletion);
 
@@ -192,35 +207,23 @@ export class Player {
         spit.update(ctx);
       });
     }
+  }
 
-    const renderer = this.playerIsDead ? this.deathRenderer : this.imgRenderer;
-    // Set transparency if invincible
-    ctx.globalAlpha = this.invinsible && this.playerIsDead === false ? 0.5 : 1;
-
-    if (renderer) {
-      renderer.animate(); // animate and draw method from class imgeHandler
-      renderer.draw(
-        ctx,
-        this.position.x,
-        this.position.y,
-        this.width,
-        this.height
-      );
-    } else {
-      console.log("No valid sprite renderer available!");
-    }
-
-    ctx.strokeStyle = "red";
+  drawPlayerDebug(ctx) {
+    ctx.strokeStyle = "green";
     ctx.strokeRect(this.position.x, this.position.y, this.width, this.height);
 
     //hitbox
-    ctx.fillStyle = "rgba(6, 27, 221, 0.5";
+    ctx.strokeStyle = "green";
     ctx.strokeRect(
       this.hitbox.position.x,
       this.hitbox.position.y,
       this.hitbox.width,
       this.hitbox.height
     );
+  }
+
+  drawMapBoundariesDebug(ctx) {
     //map edge
     if (this.mapBoundaries) {
       ctx.beginPath();
@@ -252,13 +255,33 @@ export class Player {
       );
       ctx.stroke();
     }
+  }
 
-    ctx.fillRect(
-      this.hitbox.position.x,
-      this.hitbox.position.y,
-      this.hitbox.width,
-      this.hitbox.height
-    );
+  draw(ctx) {
+    ctx.save();
+
+    this.handleSpit(ctx);
+
+    const renderer = this.playerIsDead ? this.deathRenderer : this.imgRenderer;
+    // Set transparency if invincible
+    ctx.globalAlpha = this.invinsible && this.playerIsDead === false ? 0.5 : 1;
+
+    if (renderer) {
+      renderer.animate(); // animate and draw method from class imgeHandler
+      renderer.draw(
+        ctx,
+        this.position.x,
+        this.position.y,
+        this.width,
+        this.height
+      );
+    } else {
+      console.log("No valid sprite renderer available!");
+    }
+
+    //this.drawPlayerDebug(ctx);
+    this.drawMapBoundariesDebug(ctx);
+
     ctx.restore();
   }
 
@@ -338,11 +361,31 @@ export class Player {
         break;
       }
     }
+
     // call resolving a collision that moves the player, hitbox stays align with the player
     //  after the player has moved (either from normal movement or from being pushed back due to a collision).
     //A collision might force the player’s position.x or position.y to be changed.
     //Since the hitbox position depends on the player’s position, we must recalculate it.
     // That’s exactly what updateHitbox() does — it keeps the hitbox in the right place after any change.
+
+    for (let platform of this.collisionPlatforms) {
+      if (
+        this.hitbox.position.x < platform.position.x + platform.width &&
+        this.hitbox.position.x + this.hitbox.width > platform.position.x &&
+        this.hitbox.position.y + this.hitbox.height <=
+          platform.position.y + 10 && // Only if coming from above
+        this.hitbox.position.y + this.hitbox.height + this.velocity.y >=
+          platform.position.y
+      ) {
+        if (this.velocity.y > 0) {
+          const offsetY = this.hitbox.position.y - this.position.y;
+          this.jumpCount = 0;
+          this.velocity.y = 0;
+          this.position.y = platform.position.y - offsetY - this.hitbox.height;
+          break;
+        }
+      }
+    }
     this.updateHitbox();
   }
 

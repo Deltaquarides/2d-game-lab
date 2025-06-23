@@ -30,7 +30,7 @@ export class Camera {
   applyTransform() {
     this.ctx.translate(-this.x, this.y);
   }
-
+  /*
   drawDebug() {
     this.ctx.save();
     this.ctx.fillStyle = "orange";
@@ -41,4 +41,5 @@ export class Camera {
     this.ctx.fillRect(100, this.scrollPostBottom, 64, 10);
     this.ctx.restore();
   }
+    */
 }

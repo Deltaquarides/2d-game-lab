@@ -1,6 +1,7 @@
 import { createImage } from "../utils/createImage.js";
 import { loadMap } from "../utils/loadMap.js";
 import { CollisionsBox } from "./collisionsBox.js";
+import { CollisionsPlatform } from "./collisionsPlatform.js";
 
 export class Map {
   constructor() {
@@ -9,7 +10,8 @@ export class Map {
     this.tilesets = [];
     this.layerTilesetMap = {}; // To map layers to tilesets
     this.collisions = null;
-    this.collisionBlocks = []; // Add this line
+    this.collisionBlocks = [];
+    this.collisionPlatforms = [];
 
     this.ready = Promise.all([
       loadMap("./map/shy_Hills/l_New_Layer_1.json"), //load layers via "laodMap" function that handle fetch
@@ -80,6 +82,7 @@ export class Map {
           //console.log("layer1 length:", layer1);
           this.mapHeight = layer1.length;
           this.mapWidth = layer1[1].length;
+
           this.mapBoundaries = {
             leftEdge: 0,
             topEdge: 0,
@@ -114,14 +117,14 @@ export class Map {
           );
           //console.log(`Value 2 found at x: ${x}, y: ${y}`);
         } else if (coliVal === 2) {
-          this.collisionBlocks.push(
-            new CollisionsBox({
+          this.collisionPlatforms.push(
+            new CollisionsPlatform({
               position: {
                 x: x * this.tileSize,
                 y: y * this.tileSize + 16,
               },
               width: 16,
-              height: 16,
+              height: 5,
             })
           );
         }

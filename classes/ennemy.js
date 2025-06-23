@@ -7,7 +7,7 @@ import { Projectile } from "./projectile.js";
     - defined enemy hitbox
     - draw an square for debug
     - add gravity
-    - add collision for the enely to stay on ground
+    - add collision for the enemy to stay on ground
 */
 export class Enemy {
   constructor({
@@ -24,6 +24,7 @@ export class Enemy {
     this.player = player;
     this.hearts = hearts; //same array shared  between the Enemy and the main game file, reference to 3 hearts, prevent double-damage from the same fireball
     this.lives = lives;
+    this.totalLives = lives;
     this.position = {
       x: enemyPositions.x,
       y: enemyPositions.y,
@@ -345,7 +346,25 @@ export class Enemy {
     if (isTopHit) {
       object1.velocity.y = -5;
 
-      this.isDead = true;
+      let damage;
+      switch (this.spriteType) {
+        case "enemyLuxmn":
+          damage = 1;
+          break;
+        case "enemyAmazon":
+          damage = 1;
+          break;
+        case "otile":
+          damage = 2;
+          break;
+      }
+      this.lives -= damage;
+      this.setIsInvisible();
+      // Remove enemy if no lives
+      if (this.lives <= 0) {
+        this.isDead = true;
+      }
+
       return; //exit the checkPlayerCollision() method early after successfully detecting a top-down hit on the enemy.
     } else if (!this.hasRecentlyHitPlayer) {
       this.hasRecentlyHitPlayer = true;
@@ -448,13 +467,67 @@ export class Enemy {
     }
   }
 
+  drawHealthBar() {
+    //border of health bar
+    let color;
+
+    const remainingLives = (this.lives / this.totalLives) * 100;
+
+    color =
+      remainingLives > 70 ? "green" : remainingLives < 40 ? "red " : "yellow";
+    console.log(color);
+
+    this.ctx.strokeStyle = "red";
+    this.ctx.lineWidth = 1;
+    this.ctx.strokeRect(
+      this.hitbox.position.x + this.hitbox.width / 2 - (10 * this.lives) / 2,
+      this.hitbox.position.y - 10,
+      10 * this.totalLives,
+      5
+    );
+
+    //fill the health bar
+    this.ctx.fillStyle = color;
+    this.ctx.fillRect(
+      this.hitbox.position.x + this.hitbox.width / 2 - (10 * this.lives) / 2,
+      this.hitbox.position.y - 10,
+      10 * this.lives,
+      5
+    );
+  }
+
+  drawEnemyName() {
+    let enemyName;
+
+    if (this.spriteType === "otile") {
+      enemyName = "Otile";
+    } else if (this.spriteType === "enemyAmazon") {
+      enemyName = "AmazonBabe";
+    } else {
+      enemyName = "Luxman";
+    }
+
+    const textWidth = this.ctx.measureText(enemyName).width;
+
+    //name of enemy
+    this.ctx.strokeStyle = "rgb(6, 219, 201)";
+    this.ctx.lineWidth = 0.3;
+    this.ctx.strokeText(
+      enemyName,
+      this.hitbox.position.x + this.hitbox.width / 2 - textWidth / 2,
+      this.hitbox.position.y - 15
+    );
+  }
+
   draw() {
     if (this.isDead) {
       // If enemy has been hit from top(dead), show explosion
       this.drawExplosion();
     } else {
       this.drawEnemy();
-      this.drawDebug();
+      //this.drawDebug();
+      this.drawHealthBar();
+      this.drawEnemyName();
     }
     this.drawfireBAll();
   }
