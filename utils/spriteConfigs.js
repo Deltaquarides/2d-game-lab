@@ -144,4 +144,12 @@ export const spriteConfigs = {
       frameY: 0,
     },
   },
+  items: {
+    ring: {
+      src: "/images/coin_sprite.png",
+      totalCols: 4,
+      totalRows: 1,
+      frameY: 0,
+    },
+  },
 };
