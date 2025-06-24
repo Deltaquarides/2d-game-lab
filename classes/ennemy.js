@@ -13,6 +13,7 @@ export class Enemy {
   constructor({
     ctx,
     collisionBlocks = [],
+    collisionPlatforms = [],
     mapBoundaries = null,
     enemyPositions = { x: 0, y: 0 },
     player = null,
@@ -62,6 +63,7 @@ export class Enemy {
 
     this.isOnGround = false; // ← track grounded state
     this.collisionBlocks = collisionBlocks;
+    this.collisionPlatforms = collisionPlatforms;
     this.mapBoundaries = mapBoundaries;
 
     this.ctx = ctx;
@@ -225,7 +227,7 @@ export class Enemy {
       const isFallingOntoBlock =
         this.velocity.y >= 0 && //moving downward
         hitboxBottom <= blockTop && //above the block
-        hitboxBottom + this.velocity.y >= blockTop;
+        hitboxBottom + this.velocity.y >= blockTop; // predict and prevent the enemy from falling through a block
 
       if (isHorizontallyAligned && isFallingOntoBlock) {
         this.velocity.y = 0;
@@ -235,6 +237,34 @@ export class Enemy {
       }
     }
 
+    if (!landed) {
+      for (const platform of this.collisionPlatforms) {
+        const platformTop = platform.position.y;
+        const enemyFoot = this.hitbox.position.y + this.hitbox.height;
+
+        const platformLeft = platform.position.x;
+        const platformRight = platform.position.x + platform.width;
+
+        const enemyRight = this.hitbox.position.x + this.hitbox.width;
+        const enemyLeft = this.hitbox.position.x;
+
+        const isFallingOntoPlatform =
+          this.velocity.y >= 0 &&
+          enemyFoot <= platformTop + 5 &&
+          enemyFoot + this.velocity.y >= platformTop;
+
+        const isHorizontallyAligned =
+          enemyRight > platformLeft && enemyLeft < platformRight;
+
+        if (isHorizontallyAligned && isFallingOntoPlatform) {
+          ("ok");
+          this.velocity.y = 0;
+          this.position.y = platformTop - this.height;
+          landed = true;
+          break;
+        }
+      }
+    }
     this.isOnGround = landed;
   }
 
@@ -475,24 +505,23 @@ export class Enemy {
 
     color =
       remainingLives > 70 ? "green" : remainingLives < 40 ? "red " : "yellow";
-    console.log(color);
 
     this.ctx.strokeStyle = "red";
     this.ctx.lineWidth = 1;
     this.ctx.strokeRect(
       this.hitbox.position.x + this.hitbox.width / 2 - (10 * this.lives) / 2,
-      this.hitbox.position.y - 10,
+      this.hitbox.position.y - 8,
       10 * this.totalLives,
-      5
+      4
     );
 
     //fill the health bar
     this.ctx.fillStyle = color;
     this.ctx.fillRect(
       this.hitbox.position.x + this.hitbox.width / 2 - (10 * this.lives) / 2,
-      this.hitbox.position.y - 10,
+      this.hitbox.position.y - 8,
       10 * this.lives,
-      5
+      4
     );
   }
 
@@ -525,7 +554,7 @@ export class Enemy {
       this.drawExplosion();
     } else {
       this.drawEnemy();
-      //this.drawDebug();
+      this.drawDebug();
       this.drawHealthBar();
       this.drawEnemyName();
     }
@@ -553,6 +582,7 @@ export class Enemy {
     }
 
     this.checkOnGround();
+    this.updateHitbox();
 
     this.checkPlayerCollision(this.player, this); // this refer to the current enemy instance itself
 
