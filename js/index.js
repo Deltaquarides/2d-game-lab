@@ -4,9 +4,10 @@ import { preloadSprites } from "../utils/preloadSprites.js";
 import { Map } from "../classes/map.js";
 import { Camera } from "../classes/camera.js";
 import { Enemy } from "../classes/ennemy.js";
-import { level1Enemies } from "../utils/levelEnemy.js";
+import { level1Enemies, level1items } from "../utils/levelEnemy.js";
 import { Heart } from "../classes/heart.js";
 import { introLevel } from "../utils/global_utilities.js";
+import { Items } from "../classes/items.js";
 
 const canvas = document.getElementById("myCanvas"); //retrieves the node in the DOM representing the <canvas>
 canvas.width = window.innerWidth;
@@ -22,6 +23,7 @@ let camera;
 let enemies = [];
 let hearts = [];
 const heartCount = 5;
+let ring = [];
 
 introLevel("Shy Hills Zone", "ACT 1");
 
@@ -40,10 +42,10 @@ function createHearts() {
   }
 }
 
-//draw Hearts outside of camera
+//draw Hearts
 function drawUi() {
   hearts.forEach((heart) => {
-    const offsetX = camera.x; // moves UI hearts with the camera, canvas is shifs the drawing context (semms like it's moving) not the hearts
+    const offsetX = camera.x; // moves UI hearts with the camera, canvas  shifs the drawing context (semms like it's moving) not the hearts
     heart.drawUI(ctx, offsetX);
   });
 }
@@ -64,6 +66,14 @@ map.ready.then(() => {
         lives: e.lives || 2,
       });
     });
+
+    ring = level1items.map((r) => {
+      return new Items({
+        ctx: ctx,
+        itemsPotisions: { x: r.x, y: r.y },
+      });
+    });
+    console.log(ring);
 
     player = new Player({
       x: 0,
@@ -117,6 +127,8 @@ function animate() {
 
     drawUi();
     ctx.restore(); // Restore default canvas state (no scale, no translate)
+
+    ring.forEach((r) => r.update()); //draw all rings
 
     requestAnimationFrame(animate); // Loop again
   } catch (err) {
