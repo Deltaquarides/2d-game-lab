@@ -22,8 +22,10 @@ let player;
 let camera;
 let enemies = [];
 let hearts = [];
-const heartCount = 5;
+let heartCount = 5;
+
 let ring = [];
+let ringNumberCollected = 0;
 
 introLevel("Shy Hills Zone", "ACT 1");
 
@@ -50,6 +52,38 @@ function drawUi() {
   });
 }
 
+//draw all rings and rings count
+function drawRings() {
+  ring.forEach((r) => {
+    r.update();
+  });
+}
+
+function incrementRingCounter() {
+  ringNumberCollected++;
+}
+
+function drawRingsName() {
+  const offsetX = camera.x;
+  const itemName = "Rings:";
+  ctx.font = "10px monospace";
+  ctx.strokeStyle = "rgba(13, 49, 231)";
+  ctx.strokeText(itemName, 15 + offsetX, 40, 16);
+}
+
+function drawRingsNumber() {
+  if (!ring) return; //  Wait until rings are created
+  const offsetX = camera.x;
+  ctx.font = "bold  monospace";
+  ctx.strokeStyle = "rgba(13, 49, 231)";
+  ctx.strokeText(
+    ` ${ringNumberCollected} / ${level1items.length}`,
+    33 + offsetX,
+    40,
+    16
+  );
+}
+
 map.ready.then(() => {
   preloadSprites().then(() => {
     //for each {x,y} in the array create a new instance of enemy, pass enemyPositions: pos, to the constructor.
@@ -66,14 +100,6 @@ map.ready.then(() => {
         lives: e.lives || 2,
       });
     });
-
-    ring = level1items.map((r) => {
-      return new Items({
-        ctx: ctx,
-        itemsPotisions: { x: r.x, y: r.y },
-      });
-    });
-    console.log(ring);
 
     player = new Player({
       x: 0,
@@ -92,6 +118,15 @@ map.ready.then(() => {
     camera = new Camera({ ctx, player });
 
     createHearts();
+
+    ring = level1items.map((r) => {
+      return new Items({
+        ctx: ctx,
+        itemsPotisions: { x: r.x, y: r.y },
+        player,
+        onCollect: incrementRingCounter,
+      });
+    });
   });
 });
 
@@ -126,9 +161,16 @@ function animate() {
     map.collisionBlocks.forEach((block) => block.draw(ctx));
 
     drawUi();
-    ctx.restore(); // Restore default canvas state (no scale, no translate)
+    ring = ring.filter((r) => !r.isCollected);
+    drawRings();
 
-    ring.forEach((r) => r.update()); //draw all rings
+    //if player is not dead show rings count
+    if (!player.playerIsDead) {
+      drawRingsName();
+      drawRingsNumber();
+    }
+
+    ctx.restore(); // Restore default canvas state (no scale, no translate)
 
     requestAnimationFrame(animate); // Loop again
   } catch (err) {
