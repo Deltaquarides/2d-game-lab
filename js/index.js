@@ -161,7 +161,7 @@ function animate() {
     map.collisionBlocks.forEach((block) => block.draw(ctx));
 
     drawUi();
-    ring = ring.filter((r) => !r.isCollected);
+    ring = ring.filter((r) => !r.markedForDeletion);
     drawRings();
 
     //if player is not dead show rings count

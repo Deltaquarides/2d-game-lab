@@ -25,12 +25,16 @@ export class Items {
 
     this.ctx = ctx;
     this.ringSprite = createSpriteRenderer("items", "ring");
+    this.coinExplode = createSpriteRenderer("items", "ringExplosion");
+    console.log(this.coinExplode);
 
     this.player = player;
 
     this.isCollected = false;
 
     this.onCollect = onCollect;
+
+    this.markedForDeletion = false;
   }
 
   collect() {
@@ -88,8 +92,9 @@ export class Items {
     );
   }
 
-  draw() {
-    if (!this.isCollected && this.ringSprite.loaded) {
+  drawRing() {
+    // normal ring
+    if (this.ringSprite.loaded) {
       this.ringSprite.animate();
       this.ringSprite.draw(
         this.ctx,
@@ -100,9 +105,31 @@ export class Items {
       );
     }
   }
+
+  drawExplosion() {
+    // explosion animation
+    if (this.coinExplode.loaded) {
+      this.coinExplode.animate();
+
+      this.coinExplode.draw(this.ctx, this.position.x, this.position.y, 32, 32);
+
+      if (this.coinExplode.frameX === this.coinExplode.cols - 1) {
+        this.markedForDeletion = true;
+      }
+    }
+  }
+  draw() {
+    if (!this.isCollected) {
+      this.drawRing();
+    } else {
+      this.drawExplosion();
+
+      // maybe add logic: after explosion finishes, mark for deletion
+    }
+  }
   update() {
-    this.draw();
     this.checkCollisionWithPlayer();
+    this.draw();
     this.debugItems();
   }
 }

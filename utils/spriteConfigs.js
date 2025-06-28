@@ -151,5 +151,11 @@ export const spriteConfigs = {
       totalRows: 1,
       frameY: 0,
     },
+    ringExplosion: {
+      src: "/images/coin_explosion.png",
+      totalCols: 5,
+      totalRows: 1,
+      frameY: 0,
+    },
   },
 };

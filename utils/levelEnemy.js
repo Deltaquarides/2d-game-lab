@@ -1,7 +1,7 @@
 // array of position objects for each level
 
 export const level1Enemies = [
-  { x: 40, y: 10, lives: 2 },
+  // { x: 40, y: 10, lives: 2 },
   { x: 120, y: 10, lives: 2 },
   { x: 200, y: 100, lives: 2 },
   { x: 300, y: 100, lives: 2 },
@@ -18,23 +18,20 @@ export const level1Enemies = [
 ];
 
 export const level1items = [
-  { x: 120, y: 190 },
-  { x: 150, y: 190 },
-  { x: 180, y: 190 },
-  { x: 210, y: 190 },
-  { x: 240, y: 190 },
-  { x: 270, y: 190 },
-  { x: 120, y: 250 },
-  { x: 150, y: 250 },
-  { x: 180, y: 250 },
-  { x: 210, y: 250 },
-  { x: 240, y: 250 },
-  { x: 270, y: 250 },
-  { x: 490, y: 50 },
-  { x: 530, y: 50 },
-  { x: 580, y: 440 },
-  { x: 610, y: 440 },
-  { x: 640, y: 440 },
+  { x: 25, y: 55 },
+  { x: 45, y: 55 },
+  { x: 65, y: 55 },
+  { x: 100, y: 8 },
+  { x: 120, y: 8 },
+  { x: 140, y: 8 },
+  { x: 160, y: 8 },
+  { x: 130, y: 100 },
+  { x: 150, y: 100 },
+  { x: 170, y: 100 },
+  { x: 350, y: 120 },
+  { x: 370, y: 120 },
+  { x: 390, y: 120 },
+  { x: 410, y: 120 },
 ];
 
 export const level2Enemies = [
