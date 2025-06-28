@@ -539,7 +539,7 @@ export class Enemy {
     const textWidth = this.ctx.measureText(enemyName).width;
 
     //name of enemy
-    this.ctx.strokeStyle = "rgb(6, 219, 201)";
+    this.ctx.strokeStyle = "rgba(6, 219, 201)";
     this.ctx.lineWidth = 0.3;
     this.ctx.strokeText(
       enemyName,
@@ -554,7 +554,7 @@ export class Enemy {
       this.drawExplosion();
     } else {
       this.drawEnemy();
-      this.drawDebug();
+      // this.drawDebug();
       this.drawHealthBar();
       this.drawEnemyName();
     }

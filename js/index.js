@@ -108,6 +108,7 @@ map.ready.then(() => {
       collisionPlatforms: map.collisionPlatforms,
       mapBoundaries: map.mapBoundaries,
       enemies,
+      getRingCount: () => ringNumberCollected, // access the latest value using callback
     });
 
     // Now that player exists, assign the player reference to enemies otherwise

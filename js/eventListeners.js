@@ -48,7 +48,12 @@ window.addEventListener("keydown", ({ code }) => {
   if (isDown) {
     currentPlayer.velocity.y = 20;
   }
-  if (spitAttack && currentPlayer.canAttack && !currentPlayer.playerIsDead) {
+  if (
+    spitAttack &&
+    currentPlayer.canAttack &&
+    !currentPlayer.playerIsDead &&
+    currentPlayer.getRingCount() >= 14
+  ) {
     currentPlayer.attack();
   }
 });

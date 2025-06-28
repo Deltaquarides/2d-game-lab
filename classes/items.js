@@ -26,7 +26,6 @@ export class Items {
     this.ctx = ctx;
     this.ringSprite = createSpriteRenderer("items", "ring");
     this.coinExplode = createSpriteRenderer("items", "ringExplosion");
-    console.log(this.coinExplode);
 
     this.player = player;
 

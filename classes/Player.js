@@ -13,6 +13,7 @@ export class Player {
     collisionPlatforms = [],
     mapBoundaries = null,
     enemies = [],
+    getRingCount,
   }) {
     this.playerIsDead = false;
 
@@ -64,6 +65,7 @@ export class Player {
     this.canAttack = true;
 
     this.enemies = enemies;
+    this.getRingCount = getRingCount;
   }
 
   //when player is hit change opacity
@@ -78,6 +80,7 @@ export class Player {
     this.playerIsDead = true;
   }
 
+  //this method is being called in eventListeners
   attack() {
     //prevent player from attacking, if  canAttack is false it exits immediately the function
     if (!this.canAttack) return; // <-- IMPORTANT: prevent attack during cooldown
@@ -175,6 +178,8 @@ export class Player {
   update(ctx) {
     this.drawDebugBlocs(ctx);
     this.drawDebugPlatforms(ctx);
+
+    console.log("Current rings:", this.getRingCount()); // Will now reflect the real count
 
     if (!this.playerIsDead) {
       this.updateHitbox(); //Any time you change position.x or position.y, call updateHitbox()
