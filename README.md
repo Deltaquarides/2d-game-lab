@@ -1,6 +1,6 @@
 # My 2D JavaScript Game from scratch!
 
-A retro-style platformer inspired by classic Mario games. Built using JavaScript and HTML5 Canvas.
+A retro-style platformer inspired by classic Sonic and Mario games. Built using JavaScript and HTML5 Canvas.
 
 ## Features
 - Pixel art graphics: sprite using piskel, map using mapperMate
@@ -9,7 +9,7 @@ A retro-style platformer inspired by classic Mario games. Built using JavaScript
 - Basic enemy AI
 
 ## How to Play
-Use arrow keys to move and jump. Avoid enemies and reach the goal!
+Use arrow keys to move and jump. Shoot enemies, collect coins, and reach the goal!
 
 ## Setup
 Clone the repo and open `index.html` in your browser.
