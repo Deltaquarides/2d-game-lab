@@ -3,6 +3,8 @@
 export const levelData = {
   1: {
     map: {
+      name: "Shy Hills Zone",
+      levelNumber: "ACT 1",
       layers: [
         "./map/shy_Hills/l_New_Layer_1.json",
         "./map/shy_Hills/l_New_Layer_2.json",
@@ -50,6 +52,8 @@ export const levelData = {
   },
   2: {
     map: {
+      name: "Dark Cave Zone",
+      levelNumber: "ACT 1",
       layers: [
         "./map/Dark_Cave/l_New_Layer_1.json",
         "./map/Dark_Cave/l_New_Layer_2.json",
