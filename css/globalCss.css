@@ -1,3 +1,40 @@
+body {
+    background: #000;
+    font-family: 'Arial', sans-serif;
+    overflow: hidden;
+}
+
+  .neon_text {
+    position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%); /* Move the element back by half its size */
+    text-align:center;
+    font-size: 3rem;
+    width:max-content;
+    color: #fff;
+    text-shadow: 0 0 5px #ff005e, 0 0 10px #ff005e, 0 0 20px #ff005e, 0 0 40px #ff005e, 0 0 80px #ff005e;
+    animation: glow 1.5s infinite alternate;
+}
+
+@keyframes glow {
+    0% {
+        text-shadow: 0 0 5px #ff005e, 0 0 10px #ff005e, 0 0 20px #ff005e, 0 0 40px #ff005e, 0 0 80px #ff005e;
+    }
+    100% {
+        text-shadow: 0 0 10px #00d4ff, 0 0 20px #00d4ff, 0 0 40px #00d4ff, 0 0 80px #00d4ff, 0 0 160px #00d4ff;
+    }
+}
+
+.startVid{
+  position: absolute;
+  width:150px;
+  height:150px;
+  top: 70%;
+  left: 50%;
+  transform: translate(-50%);
+}
+
 .gameOver{
 position:absolute;
 height:80px;
@@ -28,19 +65,19 @@ animation: myAnim 1.5s forwards ease-out;
 
 @keyframes myAnim {
     0%{
- transform: translate(200%, 400%)scale(0);
+ transform: translate(170%, 400%)scale(0);
          opacity: 0;
     }
   30% {
- transform: translate(200%, 400%)scale(0.5);
+ transform: translate(170%, 400%)scale(0.5);
     opacity: 0.5;
   }
     50% {
- transform: translate(200%, 400%) scale(0.7);
+ transform: translate(170%, 400%) scale(0.7);
     opacity: 0.75;
   }
   100% {
- transform: translate(200%, 400%) scale(1);
+ transform: translate(170%, 400%) scale(1);
     opacity: 1;
   }
   
@@ -114,8 +151,7 @@ animation: myAnim 1.5s forwards ease-out;
 }
 
   .oval-animation{
-        position:absolute;
-
+    position:absolute;
     width:150px;
     height:190px;
     background-color: rgba(153, 146, 153);
@@ -180,3 +216,4 @@ animation: myAnim 1.5s forwards ease-out;
                  11px 11px 1px rgba(0,0,0,0.5),
                  0px 0px 10px rgba(0,0,0,.2);
   }
+

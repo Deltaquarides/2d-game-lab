@@ -1,4 +1,5 @@
 import { getSpriteHandler } from "../utils/preloadSprites.js";
+import { audioPlayer } from "../js/index.js";
 
 export class Projectile {
   constructor({
@@ -35,7 +36,6 @@ export class Projectile {
     this.facing = facing;
 
     this.startLifetime(); // default auto-destroy if nothing happens
-    console.log("Created new projectile with renderer ID:", this.renderer);
 
     this.mapBoundaries = mapBoundaries;
   }
@@ -69,8 +69,10 @@ export class Projectile {
 
           this.markForDeletion(300);
         }
+        return true;
       }
     }
+    return false;
   }
 
   //collision of projectile to boundaries of map
@@ -86,10 +88,9 @@ export class Projectile {
         this.facing === "right" ? "spit_crash_right" : "spit_crash_left";
       this.renderer = getSpriteHandler(crashKey);
       this.speed = 0;
-
-      console.log("RUN MAN RUN!!!!!");
+      return true; // <-- return true when collision happens
     }
-    console.log(this.mapBoundaries.rightEdge);
+    return false;
   }
 
   //player give damages to enemy:
@@ -113,19 +114,27 @@ export class Projectile {
     if (this.renderer) this.renderer.animate();
     this.checkCollisionsBloc();
     this.checkCollisionsBoundaries();
+    if (this.checkCollisionsBloc() || this.checkCollisionsBoundaries())
+      audioPlayer.playPartAudio({
+        name: "plop",
+        begin: 0.5,
+        end: 1,
+        volume: 0.6,
+      });
   }
 
   draw(ctx) {
     ctx.save();
-    ctx.strokeRect(this.position.x, this.position.y, this.width, this.height);
+    //ctx.strokeRect(this.position.x, this.position.y, this.width, this.height);
 
-    ctx.strokeStyle = "red";
+    /*ctx.strokeStyle = "red";
     ctx.strokeRect(
       this.hitbox.position.x,
       this.hitbox.position.y,
       this.hitbox.width,
       this.hitbox.height
     );
+    */
 
     if (this.renderer && this.renderer.loaded) {
       this.renderer.draw(

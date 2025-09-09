@@ -11,6 +11,15 @@ export const coolDown = (object, property, valueAfterCooldown, duration) => {
   }, duration);
 };
 
+// to re-trigger the Animation, force a reflow by removing and re-adding the class:
+// because in the next level introLvel won't show
+//cause: animation class only triggers Once: CSS animations won't retrigger if the class is already applied
+function resetAnimation(element, className) {
+  element.classList.remove(className);
+  void element.offsetWidth; // trigger reflow
+  element.classList.add(className);
+}
+
 // **** for entrance level map add text and animation ****
 export const introLevel = (levelName, levelNumber) => {
   if (!levelName && !levelNumber) {
@@ -30,9 +39,9 @@ export const introLevel = (levelName, levelNumber) => {
     mapNameElement.innerText = levelName;
     mapLevelElement.innerText = levelNumber;
 
-    mapNameElement.classList.add("mapName-animation");
-    mapLevelElement.classList.add("mapLevel-animation");
-    ovalElement.classList.add("oval-animation");
+    resetAnimation(mapNameElement, "mapName-animation");
+    resetAnimation(mapLevelElement, "mapLevel-animation");
+    resetAnimation(ovalElement, "oval-animation");
   } else {
     console.log("something went wrong Sherlock!");
   }

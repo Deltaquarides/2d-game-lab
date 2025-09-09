@@ -1,6 +1,7 @@
 import { removeHeart } from "../utils/heartManager.js";
 import { coolDown, createSpriteRenderer } from "../utils/global_utilities.js";
 import { Projectile } from "./projectile.js";
+import { audioPlayer } from "../js/index.js";
 
 /*
     - defined enemy postions width and height
@@ -20,6 +21,7 @@ export class Enemy {
     hearts = null,
     spriteType,
     lives,
+    canMove,
   }) {
     //player class
     this.player = player;
@@ -33,6 +35,7 @@ export class Enemy {
     this.width = 64;
     this.height = 64;
 
+    this.canMove = canMove;
     this.hitbox = {
       position: {
         x: this.position.x,
@@ -257,7 +260,6 @@ export class Enemy {
           enemyRight > platformLeft && enemyLeft < platformRight;
 
         if (isHorizontallyAligned && isFallingOntoPlatform) {
-          ("ok");
           this.velocity.y = 0;
           this.position.y = platformTop - this.height;
           landed = true;
@@ -393,12 +395,25 @@ export class Enemy {
       // Remove enemy if no lives
       if (this.lives <= 0) {
         this.isDead = true;
+        switch (this.spriteType) {
+          case "enemyLuxmn":
+            audioPlayer.playAudio({ name: "luxmanDead", volume: 0.2 });
+            break;
+          case "enemyAmazon":
+            audioPlayer.playAudio({ name: "amazonDead", volume: 0.2 });
+            break;
+          case "otile":
+            audioPlayer.playAudio({ name: "otileDead", volume: 0.2 });
+            break;
+        }
       }
 
       return; //exit the checkPlayerCollision() method early after successfully detecting a top-down hit on the enemy.
     } else if (!this.hasRecentlyHitPlayer) {
       this.hasRecentlyHitPlayer = true;
-
+      if (!this.isDead) {
+        audioPlayer.playAudio({ name: "playerHit", volume: 0.2 });
+      }
       this.player.setIsInvisible(); //change opacity when hit
 
       removeHeart(this.hearts); // remove 1 heart only
@@ -567,11 +582,24 @@ export class Enemy {
     //in terms of performance and clarity, checking !this.activated is better avoiding
     if (!this.activated && this.isPlayerNearby()) {
       this.activated = true;
+      switch (this.spriteType) {
+        case "enemyLuxmn":
+          audioPlayer.playAudio({ name: "luxmanShout", volume: 0.2 }); // plays once
+          break;
+        case "enemyAmazon":
+          audioPlayer.playAudio({ name: "amazonShout", volume: 0.2 }); // plays once
+          break;
+        case "otile":
+          audioPlayer.playAudio({ name: "otileCaralho", volume: 0.2 }); // plays once
+
+          break;
+      }
     }
 
     if (
       this.activated &&
-      !this.isDead /*&& this.spriteType !== "enemyAmazon"*/
+      !this.isDead /*&& this.spriteType !== "enemyAmazon"*/ &&
+      this.canMove
     ) {
       this.patrol();
 

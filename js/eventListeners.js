@@ -1,4 +1,5 @@
 import { getSpriteHandler } from "../utils/preloadSprites.js";
+import { getTotalRings } from "./index.js";
 
 /* 
  **** export pb for the variable imageSrc ****
@@ -13,7 +14,6 @@ let currentPlayer = null;
 function eventListeners(player) {
   currentPlayer = player;
 }
-
 const keyPressed = new Set();
 
 window.addEventListener("keydown", ({ code }) => {
@@ -52,7 +52,7 @@ window.addEventListener("keydown", ({ code }) => {
     spitAttack &&
     currentPlayer.canAttack &&
     !currentPlayer.playerIsDead &&
-    currentPlayer.getRingCount() >= 14
+    currentPlayer.getRingCount() >= 0.4 * getTotalRings()
   ) {
     currentPlayer.attack();
   }

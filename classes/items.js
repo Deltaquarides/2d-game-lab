@@ -122,13 +122,12 @@ export class Items {
       this.drawRing();
     } else {
       this.drawExplosion();
-
       // maybe add logic: after explosion finishes, mark for deletion
     }
   }
   update() {
     this.checkCollisionWithPlayer();
     this.draw();
-    this.debugItems();
+    // this.debugItems();
   }
 }

@@ -31,14 +31,14 @@ export class Heart {
   // this.markedForDeletion = true;
   //}
 
-  drawUI(ctx, offsetX = 0) {
+  drawUI(ctx, offsetX = 0, offsetY = 0) {
     if (!this.ready) return;
     // if (!this.markedForDeletion) {
-    this.draw(ctx, offsetX);
+    this.draw(ctx, offsetX, offsetY);
     //}
   }
 
-  draw(ctx, offsetX) {
+  draw(ctx, offsetX, offsetY) {
     ctx.drawImage(
       this.image,
       this.cropBox.x,
@@ -46,7 +46,7 @@ export class Heart {
       this.cropBox.width,
       this.cropBox.height,
       this.position.x + offsetX,
-      this.position.y,
+      this.position.y + offsetY,
 
       this.width,
       this.height

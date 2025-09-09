@@ -2,6 +2,7 @@
 import { getSpriteHandler } from "../utils/preloadSprites.js";
 import { Projectile } from "./projectile.js";
 import { coolDown } from "../utils/global_utilities.js";
+import { audioPlayer } from "../js/index.js";
 
 let gravity = 0.5;
 
@@ -77,11 +78,18 @@ export class Player {
   }
 
   setIsPlayerDead() {
-    this.playerIsDead = true;
+    //  audioPlayer.stopAudio("playerDead");
+
+    if (!this.playerIsDead) {
+      this.playerIsDead = true;
+      audioPlayer.playAudio({ name: "playerDead", volume: 0.2 });
+    }
   }
 
   //this method is being called in eventListeners
   attack() {
+    audioPlayer.playPartAudio({ name: "spit", begin: 0, end: 2, volume: 0.2 });
+
     //prevent player from attacking, if  canAttack is false it exits immediately the function
     if (!this.canAttack) return; // <-- IMPORTANT: prevent attack during cooldown
 
@@ -130,6 +138,12 @@ export class Player {
             enemy.hitbox.position.y + enemy.hitbox.height &&
           spit.hitbox.position.y + spit.hitbox.height > enemy.hitbox.position.y
         ) {
+          audioPlayer.playPartAudio({
+            name: "plop",
+            begin: 0.5,
+            end: 1,
+            volume: 0.6,
+          });
           //avoid damage being undefined
           if (!enemy || !enemy.spriteType || typeof enemy.lives !== "number")
             return;
@@ -179,11 +193,8 @@ export class Player {
     this.drawDebugBlocs(ctx);
     this.drawDebugPlatforms(ctx);
 
-    console.log("Current rings:", this.getRingCount()); // Will now reflect the real count
-
     if (!this.playerIsDead) {
       this.updateHitbox(); //Any time you change position.x or position.y, call updateHitbox()
-      //console.log("position y:", this.position.x, "position x:", this.position.y);
       this.position.x = this.position.x + this.velocity.x; // if velocity is for ex: +3 player will move to the right if négatif move to left.
       this.updateHitbox();
 
@@ -285,7 +296,7 @@ export class Player {
     }
 
     //this.drawPlayerDebug(ctx);
-    this.drawMapBoundariesDebug(ctx);
+    //this.drawMapBoundariesDebug(ctx);
 
     ctx.restore();
   }
@@ -431,13 +442,12 @@ export class Player {
       this.velocity.y = this.jumpForce; // Set the upward jump velocity
       this.jumpCount++; // Increment the jump count
       this.state = "jumping";
-      // console.log(`Jump ${this.jumpCount}`);
     }
   }
 
   jump() {
     this.doubleJump();
-    // console.log("DOUBLEjump:", this.jumpCount);
+    audioPlayer.playAudio({ name: "jump", volume: 0.1 });
   }
 
   walk(direction) {

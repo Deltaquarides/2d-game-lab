@@ -8,6 +8,7 @@ export const removeHeart = (heartArray) => {
 };
 
 // add in the last position a heart by creating a new Heart instance
+//heartConfig is an object {} with x,y width, heigth, image src from Heart class.
 export const addHeart = (heartArray, heartConfig) => {
   const heart = new Heart(heartConfig);
   heartArray.push(heart);

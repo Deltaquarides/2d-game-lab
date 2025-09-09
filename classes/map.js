@@ -4,93 +4,71 @@ import { CollisionsBox } from "./collisionsBox.js";
 import { CollisionsPlatform } from "./collisionsPlatform.js";
 
 export class Map {
-  constructor() {
+  constructor(mapConfig) {
+    // <-- refer to map object in levelEnemy  -->mapConfig = levelData[1].map
     this.tileSize = 16;
     this.layers = [];
     this.tilesets = [];
-    this.layerTilesetMap = {}; // To map layers to tilesets
+    this.layerTilesetMap = {}; // To map in levelData object
     this.collisions = null;
     this.collisionBlocks = [];
     this.collisionPlatforms = [];
+    this.configLayerTilesets = {};
 
     this.ready = Promise.all([
-      loadMap("./map/shy_Hills/l_New_Layer_1.json"), //load layers via "laodMap" function that handle fetch
-      loadMap("./map/shy_Hills/l_New_Layer_2.json"),
-      loadMap("./map/shy_Hills/l_New_Layer_3.json"),
-      loadMap("./map/shy_Hills/l_New_Layer_4.json"),
-      loadMap("./map/shy_Hills/l_New_Layer_5.json"),
-      loadMap("./map/shy_Hills/l_New_Layer_6.json"),
-      loadMap("./map/shy_Hills/l_New_Layer_7.json"),
-      loadMap("./map/shy_Hills/collisions.json"),
-
-      createImage("./images/decorations.png"), //load the map image via "createImage" promises
-      createImage("./images/tileset.png"),
+      ...mapConfig.layers.map(loadMap), //load layers via "laodMap" function that handle fetch
+      loadMap(mapConfig.collisions),
+      ...mapConfig.tilesets.map(createImage), //load the map image via "createImage" promises
     ])
-      .then(
-        ([
-          layer1,
-          layer2,
-          layer3,
-          layer4,
-          layer5,
-          layer6,
-          layer7,
-          collisions,
-          decorations,
-          tileset,
-        ]) => {
-          this.layers = [
-            layer1,
-            layer2,
-            layer3,
-            layer4,
-            layer5,
-            layer6,
-            layer7,
-          ];
-          this.tilesets = [tileset, decorations];
-          // Map layers to specific tilesets
-          this.layerTilesetMap = {
-            0: decorations, // Layer 1 uses tileset2
-            1: decorations, // Layer 2 uses tileset1
-            2: tileset, // Layer 3 uses tileset2
-            3: decorations,
-            4: decorations,
-            5: tileset,
-            6: tileset,
-          };
-          this.collisions = collisions;
-          this.boxColisions();
-          console.log(
-            "tileset width:",
-            tileset.width,
-            "tileset height:",
-            tileset.height
-          );
-          console.log(
-            "decorations width:",
-            decorations.width,
-            "decorations height:",
-            decorations.height
-          );
-          if (tileset.width === 0 || tileset.height === 0) {
-            console.warn("Tileset image failed to load properly.");
-          }
-          if (decorations.width === 0 || decorations.height === 0) {
-            console.warn("⚠️ Decorations failed to load: width or height is 0");
-          }
-          //console.log("layer1 length:", layer1);
-          this.mapHeight = layer1.length;
-          this.mapWidth = layer1[1].length;
+      .then((result) => {
+        const numLayers = mapConfig.layers.length;
+        this.configLayerTilesets = mapConfig.layerTilesets;
+        // extract layers by slicing 0 to layers length to give all layers arrays
+        const layers = result.slice(0, numLayers);
+        // Next result after layers arrays is : collisions JSON
+        const collisions = result[numLayers];
+        //to acces tilesets +1 in the array
+        const [decorations, tileset] = result.slice(numLayers + 1);
 
-          this.mapBoundaries = {
-            leftEdge: 0,
-            topEdge: 0,
-            rightEdge: this.mapWidth * this.tileSize,
-            bottomEdge: this.mapHeight * this.tileSize,
-          };
+        this.layers = layers;
+        this.tilesets = [decorations, tileset];
+        this.collisions = collisions;
+
+        this.configLayerTilesets?.forEach((name, index) => {
+          const tileset = this.tilesets.find((img) => img.src.includes(name));
+          this.layerTilesetMap[index] = tileset || this.tilesets[0];
+        });
+
+        this.boxColisions();
+        console.log(
+          "tileset width:",
+          tileset.width,
+          "tileset height:",
+          tileset.height
+        );
+        console.log(
+          "decorations width:",
+          decorations.width,
+          "decorations height:",
+          decorations.height
+        );
+        if (tileset.width === 0 || tileset.height === 0) {
+          console.warn("Tileset image failed to load properly.");
         }
-      )
+        if (decorations.width === 0 || decorations.height === 0) {
+          console.warn("⚠️ Decorations failed to load: width or height is 0");
+        }
+        //console.log("layer1 length:", layer1);
+        this.mapHeight = layers[0].length;
+        this.mapWidth = layers[0][0].length;
+
+        this.mapBoundaries = {
+          leftEdge: 0,
+          topEdge: 0,
+          rightEdge: this.mapWidth * this.tileSize,
+          bottomEdge: this.mapHeight * this.tileSize,
+        };
+      })
 
       .catch((err) => {
         console.error("Failed to load map or images:", err);
@@ -145,13 +123,16 @@ export class Map {
     for (let i = 0; i < this.layers.length; i++) {
       const layer = this.layers[i];
       const tileset = this.layerTilesetMap[i]; // assume 1 tileset per layer for now
+
       if (!tileset) continue;
+
       const tilesetCols = tileset.width / this.tileSize;
 
       for (let y = 0; y < layer.length; y++) {
         for (let x = 0; x < layer[y].length; x++) {
           let tileVal = layer[y][x];
           if (tileVal == 0) continue;
+
           tileVal -= 1;
           sourceY = Math.floor(tileVal / tilesetCols) * this.tileSize;
           sourceX = (tileVal % tilesetCols) * this.tileSize;
